@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Piscine">
+<meta name="theme-color" content="#0a1628">
+<link rel="manifest" href="manifest.json">
+<title>Piscine</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #050e1f; --bg2: #0a1628; --card: #0d1e35; --border: #1a3050;
+    --accent: #00d4ff; --accent2: #0099cc; --success: #00e676;
+    --warning: #ffab40; --danger: #ff5252; --text: #e8f4fd;
+    --text2: #7aa5c8; --text3: #4a7299; --tab-h: 65px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text);
+    min-height: 100vh; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -1;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(0,100,180,.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,200,255,.05) 0%, transparent 50%),
+      var(--bg);
+  }
+
+  /* STATUS BAR */
+  #statusBar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 44px;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .logo { font-size: 16px; font-weight: 700; letter-spacing: 2px; color: var(--accent); }
+  #connStatus { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text2); }
+  #connDot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--danger);
+    box-shadow: 0 0 6px var(--danger); transition: all .3s;
+  }
+  #connDot.connected { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  #connDot.connecting { background: var(--warning); box-shadow: 0 0 6px var(--warning); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  #content {
+    padding-top: calc(44px + env(safe-area-inset-top, 0px) + 12px);
+    padding-bottom: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 20px);
+    padding-left: 12px; padding-right: 12px;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  #tabBar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    height: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(10,22,40,.95); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border); display: flex;
+  }
+  .tab-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    border: none; background: none; cursor: pointer; color: var(--text3); transition: color .2s;
+    font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 500;
+  }
+  .tab-btn.active { color: var(--accent); }
+  .tab-btn svg { width: 22px; height: 22px; }
+  .tab-indicator {
+    position: absolute; bottom: env(safe-area-inset-bottom, 0px); height: 2px;
+    background: var(--accent); border-radius: 2px; width: 30px;
+    transition: left .3s cubic-bezier(.4,0,.2,1); box-shadow: 0 0 8px var(--accent);
+  }
+
+  .section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+    color: var(--text3); text-transform: uppercase; margin: 20px 4px 8px;
+  }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 14px 16px; margin-bottom: 8px;
+  }
+  .card-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .card-label { font-size: 14px; font-weight: 500; }
+  .card-value { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; color: var(--accent); }
+  .card-unit { font-size: 11px; color: var(--text3); margin-left: 3px; }
+  .editable-tag { font-size: 11px; color: var(--accent); }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge.ok { background: rgba(0,230,118,.15); color: var(--success); border: 1px solid rgba(0,230,118,.3); }
+  .badge.warn { background: rgba(255,171,64,.15); color: var(--warning); border: 1px solid rgba(255,171,64,.3); }
+  .badge.danger { background: rgba(255,82,82,.15); color: var(--danger); border: 1px solid rgba(255,82,82,.3); }
+
+  .slider-track {
+    position: relative; height: 6px; background: var(--bg); border-radius: 3px;
+    overflow: visible; margin: 4px 0 2px;
+  }
+  .slider-norm { position: absolute; height: 100%; background: rgba(0,212,255,.2); border-radius: 3px; }
+  .slider-fill {
+    position: absolute; height: 100%; left: 0;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 3px; transition: width .5s cubic-bezier(.4,0,.2,1); min-width: 4px;
+  }
+  .slider-fill.ok { background: linear-gradient(90deg, #00b894, var(--success)); }
+  .slider-fill.warn { background: linear-gradient(90deg, #e67e22, var(--warning)); }
+  .slider-fill.danger { background: linear-gradient(90deg, #c0392b, var(--danger)); }
+  .slider-thumb {
+    position: absolute; top: 50%; transform: translate(-50%,-50%);
+    width: 14px; height: 14px; border-radius: 50%; background: var(--accent);
+    border: 2px solid white; box-shadow: 0 0 8px rgba(0,212,255,.5);
+    transition: left .5s cubic-bezier(.4,0,.2,1);
+  }
+  .slider-thumb.ok { background: var(--success); box-shadow: 0 0 8px rgba(0,230,118,.5); }
+  .slider-thumb.warn { background: var(--warning); box-shadow: 0 0 8px rgba(255,171,64,.5); }
+  .slider-thumb.danger { background: var(--danger); box-shadow: 0 0 8px rgba(255,82,82,.5); }
+  .slider-labels {
+    display: flex; justify-content: space-between; font-size: 10px;
+    color: var(--text3); margin-top: 3px; font-family: 'JetBrains Mono', monospace;
+  }
+
+  input[type=range].edit-slider {
+    -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px;
+    outline: none; cursor: pointer; background: var(--bg); margin: 4px 0;
+  }
+  input[type=range].edit-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,.4);
+    cursor: pointer;
+  }
+  input[type=range].edit-slider:disabled { opacity: .4; cursor: default; }
+
+  .mode-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mode-btn {
+    flex: 1; min-width: 80px; padding: 10px 8px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text2);
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .2s; text-align: center;
+  }
+  .mode-btn.active {
+    background: rgba(0,212,255,.15); border-color: var(--accent); color: var(--accent);
+    box-shadow: 0 0 12px rgba(0,212,255,.2);
+  }
+
+  .isl-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 500;
+    text-align: center; margin: 4px 0 2px; transition: color .3s;
+  }
+  .isl-label { text-align: center; font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+
+  .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .time-field label { font-size: 11px; color: var(--text3); display: block; margin-bottom: 4px; }
+  .time-field input[type=number] {
+    width: 100%; padding: 10px; border-radius: 10px; background: var(--bg);
+    border: 1px solid var(--border); color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 20px;
+    text-align: center; outline: none; transition: border-color .2s;
+  }
+  .time-field input[type=number]:focus { border-color: var(--accent); }
+  .time-field input[type=number]:disabled { opacity: .4; }
+  .time-field input[type=number]::-webkit-inner-spin-button { display: none; }
+
+  .param-row { margin-bottom: 16px; }
+  .param-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .param-label { font-size: 14px; font-weight: 500; }
+  .param-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--accent); }
+
+  .prime-btn {
+    width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--accent2);
+    background: rgba(0,153,204,.12); color: var(--accent); font-family: 'Outfit', sans-serif;
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;
+  }
+  .prime-btn:active { transform: scale(.97); background: rgba(0,212,255,.25); }
+  .prime-btn.priming {
+    background: rgba(255,171,64,.15); border-color: var(--warning);
+    color: var(--warning); animation: primePulse .5s infinite;
+  }
+  @keyframes primePulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+  .prime-progress { height: 3px; background: var(--bg); border-radius: 2px; margin-top: 6px; overflow: hidden; display: none; }
+  .prime-progress.active { display: block; }
+  .prime-bar { height: 100%; width: 100%; background: var(--warning); border-radius: 2px; transform-origin: left; animation: primeBar 5s linear forwards; }
+  @keyframes primeBar { from{transform:scaleX(1)} to{transform:scaleX(0)} }
+
+  #mqttModal {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(5,14,31,.95); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px 24px; width: 100%; max-width: 420px;
+  }
+  .modal-title { font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 6px; text-align: center; }
+  .modal-sub { font-size: 13px; color: var(--text3); text-align: center; margin-bottom: 16px; }
+  .modal-info {
+    background: rgba(0,212,255,.08); border: 1px solid rgba(0,212,255,.3);
+    border-radius: 10px; padding: 12px; font-size: 12px; color: var(--accent);
+    margin-bottom: 16px; line-height: 1.5;
+  }
+  .modal-info strong { color: var(--text); }
+  .modal-field { margin-bottom: 12px; }
+  .modal-field label { font-size: 12px; color: var(--text3); display: block; margin-bottom: 4px; }
+  .modal-field input {
+    width: 100%; padding: 12px; border-radius: 10px; background: var(--bg);
+    border: 1px solid var(--border); color: var(--text);
+    font-family: 'Outfit', sans-serif; font-size: 14px; outline: none;
+    transition: border-color .2s;
+  }
+  .modal-field input:focus { border-color: var(--accent); }
+  .connect-btn {
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none; color: #050e1f; font-family: 'Outfit', sans-serif;
+    font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px;
+    transition: opacity .2s;
+  }
+  .connect-btn:active { opacity: .8; }
+  #mqttError {
+    color: var(--danger); font-size: 12px; text-align: center; margin-top: 8px;
+    display: none; white-space: pre-wrap;
+  }
+
+  .temp-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .temp-mini-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+  .temp-mini-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .temp-mini-val { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="statusBar">
+  <div class="logo">🏊 PISCINE</div>
+  <div id="connStatus">
+    <div id="connDot"></div>
+    <span id="connLabel">Déconnecté</span>
+  </div>
+</div>
+
+<div id="content">
+  <div class="tab-panel active" id="tab-main">
+
+    <div class="section-title">Mode de fonctionnement</div>
+    <div class="card">
+      <div class="mode-picker" id="modePicker">
+        <button class="mode-btn" data-val="0">⏹ Arrêt</button>
+        <button class="mode-btn" data-val="1">🔧 Manuel</button>
+        <button class="mode-btn active" data-val="2">⚙️ Automatique</button>
+      </div>
+    </div>
+
+    <div class="section-title">Physico-chimie</div>
+
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">pH</div>
+        <div><span class="card-value" id="val-ph">--</span> <span class="badge" id="badge-ph"></span></div>
+      </div>
+      <div class="slider-track">
+        <div class="slider-norm" id="norm-ph"></div>
+        <div class="slider-fill" id="fill-ph"></div>
+        <div class="slider-thumb" id="thumb-ph"></div>
+      </div>
+      <div class="slider-labels"><span>0</span><span>7,0 – 7,4</span><span>14</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">TAC <span class="editable-tag">✏️</span></div>
+        <div><span class="card-value" id="val-tac">--</span><span class="card-unit">ppm</span>
+             <span class="badge" id="badge-tac"></span></div>
+      </div>
+      <input type="range" class="edit-slider" id="slider-tac" min="0" max="200" value="100">
+      <div class="slider-labels"><span>0</span><span>Norme : 80 – 120 ppm</span><span>200</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">TH — Dureté <span class="editable-tag">✏️</span></div>
+        <div><span class="card-value" id="val-th">--</span><span class="card-unit">ppm</span>
+             <span class="badge" id="badge-th"></span></div>
+      </div>
+      <input type="range" class="edit-slider" id="slider-th" min="0" max="300" value="150">
+      <div class="slider-labels"><span>0</span><span>Norme : 80 – 200 ppm</span><span>300</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">TDS</div>
+        <div><span class="card-value" id="val-tds">--</span><span class="card-unit">ppm</span></div>
+      </div>
+      <div class="slider-track">
+        <div class="slider-norm" id="norm-tds"></div>
+        <div class="slider-fill" id="fill-tds"></div>
+        <div class="slider-thumb" id="thumb-tds"></div>
+      </div>
+      <div class="slider-labels"><span>0</span><span>250 – 1500 ppm</span><span>2000</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">ISL — Indice de Langelier</div>
+        <span class="badge" id="badge-isl"></span>
+      </div>
+      <div class="isl-value" id="val-isl">--</div>
+      <div class="isl-label">Équilibré entre −0,3 et +0,3</div>
+      <div class="slider-track" style="margin-top:8px">
+        <div class="slider-norm" id="norm-isl"></div>
+        <div class="slider-fill" id="fill-isl"></div>
+        <div class="slider-thumb" id="thumb-isl"></div>
+      </div>
+      <div class="slider-labels"><span>−5</span><span>0</span><span>+5</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">Redox</div>
+        <div><span class="card-value" id="val-redox">--</span><span class="card-unit">mV</span>
+             <span class="badge" id="badge-redox"></span></div>
+      </div>
+      <div class="slider-track">
+        <div class="slider-norm" id="norm-redox"></div>
+        <div class="slider-fill" id="fill-redox"></div>
+        <div class="slider-thumb" id="thumb-redox"></div>
+      </div>
+      <div class="slider-labels"><span>0</span><span>650 – 720 mV</span><span>800</span></div>
+    </div>
+
+    <div class="section-title">Températures</div>
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">Température actuelle</div>
+        <div><span class="card-value" id="val-temperature">--</span><span class="card-unit">°C</span>
+             <span class="badge" id="badge-temperature"></span></div>
+      </div>
+      <div class="slider-track">
+        <div class="slider-norm" id="norm-temperature"></div>
+        <div class="slider-fill" id="fill-temperature"></div>
+        <div class="slider-thumb" id="thumb-temperature"></div>
+      </div>
+      <div class="slider-labels"><span>−10</span><span>25 – 30°C</span><span>45</span></div>
+    </div>
+
+    <div class="temp-group">
+      <div class="temp-mini-card"><div class="temp-mini-label">🌡 Moyenne</div><div class="temp-mini-val" id="val-tempmoy">-- °C</div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">❄️ Minimum</div><div class="temp-mini-val" id="val-tempmin">-- °C</div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">☀️ Maximum</div><div class="temp-mini-val" id="val-tempmax">-- °C</div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">🔧 Fréquence</div><div class="temp-mini-val" id="val-freq">-- Hz</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">Dépression pompe</div>
+        <div><span class="card-value" id="val-depression">--</span><span class="card-unit">bar</span>
+             <span class="badge" id="badge-depression"></span></div>
+      </div>
+      <div class="slider-track">
+        <div class="slider-norm" id="norm-depression"></div>
+        <div class="slider-fill" id="fill-depression"></div>
+        <div class="slider-thumb" id="thumb-depression"></div>
+      </div>
+      <div class="slider-labels"><span>−50</span><span>Normal &lt; −3</span><span>0</span></div>
+    </div>
+
+    <div class="section-title">Plage de filtration</div>
+    <div class="card">
+      <div class="card-row" style="margin-bottom:4px">
+        <div class="card-label">Programmation</div>
+        <span class="badge warn" id="filtModeBadge">⚙️ Auto</span>
+      </div>
+      <div class="time-grid">
+        <div class="time-field"><label>Heure début</label><input type="number" id="hDeb" min="0" max="23" value="0" disabled></div>
+        <div class="time-field"><label>Min début</label>  <input type="number" id="mDeb" min="0" max="59" value="0" disabled></div>
+        <div class="time-field"><label>Heure fin</label>  <input type="number" id="hFin" min="0" max="23" value="0" disabled></div>
+        <div class="time-field"><label>Min fin</label>    <input type="number" id="mFin" min="0" max="59" value="0" disabled></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-panel" id="tab-params">
+
+    <div class="section-title">Hydraulique</div>
+    <div class="card">
+      <div class="param-row">
+        <div class="param-header"><span class="param-label">Volume piscine</span><span class="param-val" id="pv-volume">--</span></div>
+        <input type="range" class="edit-slider" id="p-volume" min="0" max="200" value="0" step="1">
+        <div class="slider-labels"><span>0 m³</span><span>200 m³</span></div>
+      </div>
+      <div class="param-row" style="margin-bottom:0">
+        <div class="param-header"><span class="param-label">Débit pompe</span><span class="param-val" id="pv-debitpompe">--</span></div>
+        <input type="range" class="edit-slider" id="p-debitpompe" min="0" max="20" value="0" step="0.1">
+        <div class="slider-labels"><span>0</span><span>20 m³/h</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">Pompes doseuses</div>
+    <div class="card">
+      <div class="param-row">
+        <div class="param-header"><span class="param-label">Débit pompe pH</span><span class="param-val" id="pv-pompeph">--</span></div>
+        <input type="range" class="edit-slider" id="p-pompeph" min="0" max="200" value="0">
+        <div class="slider-labels"><span>0</span><span>200 dl/m</span></div>
+      </div>
+      <div class="param-row" style="margin-bottom:0">
+        <div class="param-header"><span class="param-label">Débit pompe Redox</span><span class="param-val" id="pv-pomperedox">--</span></div>
+        <input type="range" class="edit-slider" id="p-pomperedox" min="0" max="200" value="0">
+        <div class="slider-labels"><span>0</span><span>200 dl/m</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">Variateur de fréquence</div>
+    <div class="card">
+      <div class="param-row">
+        <div class="param-header"><span class="param-label">Fréquence basse</span><span class="param-val" id="pv-freqbasse">--</span></div>
+        <input type="range" class="edit-slider" id="p-freqbasse" min="0" max="50" value="0">
+      </div>
+      <div class="param-row">
+        <div class="param-header"><span class="param-label">Fréquence moyenne</span><span class="param-val" id="pv-freqmoy">--</span></div>
+        <input type="range" class="edit-slider" id="p-freqmoy" min="0" max="50" value="0">
+      </div>
+      <div class="param-row">
+        <div class="param-header"><span class="param-label">Fréquence haute</span><span class="param-val" id="pv-freqhaute">--</span></div>
+        <input type="range" class="edit-slider" id="p-freqhaute" min="0" max="50" value="0">
+      </div>
+      <div class="param-row" style="margin-bottom:0">
+        <div class="param-header"><span class="param-label">Minutes à fréq. haute</span><span class="param-val" id="pv-minfreqhaut">--</span></div>
+        <input type="range" class="edit-slider" id="p-minfreqhaut" min="0" max="59" value="0">
+      </div>
+    </div>
+
+    <div class="section-title">Étalonnage pH</div>
+    <div class="card">
+      <div class="param-row">
+        <div class="param-header"><span class="param-label">Étalon pH 1</span><span class="param-val" id="pv-etalonph1">--</span></div>
+        <input type="range" class="edit-slider" id="p-etalonph1" min="0" max="14" step="0.1" value="7">
+        <div class="slider-labels"><span>0</span><span>14</span></div>
+      </div>
+      <div class="param-row" style="margin-bottom:0">
+        <div class="param-header"><span class="param-label">Étalon pH 2</span><span class="param-val" id="pv-etalonph2">--</span></div>
+        <input type="range" class="edit-slider" id="p-etalonph2" min="0" max="14" step="0.1" value="7">
+        <div class="slider-labels"><span>0</span><span>14</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">Amorçage pompes</div>
+    <div class="card">
+      <button class="prime-btn" id="btn-amorceph">
+        💧 Amorcer Pompe pH
+      </button>
+      <div class="prime-progress" id="prog-amorceph"></div>
+
+      <button class="prime-btn" id="btn-amorceredox" style="margin-top:8px">
+        ⚡ Amorcer Pompe Redox
+      </button>
+      <div class="prime-progress" id="prog-amorceredox"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="tabBar">
+  <div class="tab-indicator" id="tabIndicator"></div>
+  <button class="tab-btn active" id="tabBtn0">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+    </svg>
+    Tableau de bord
+  </button>
+  <button class="tab-btn" id="tabBtn1">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M20 12h2M2 12h2M19.07 19.07l-1.41-1.41M5.34 5.34L3.93 3.93M12 20v2M12 2v2"/>
+    </svg>
+    Paramètres
+  </button>
+</div>
+
+<div id="mqttModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">🏊 Connexion MQTT</div>
+    <div class="modal-sub">Renseignez les paramètres WebSocket de votre broker</div>
+
+    <div class="modal-info">
+      <strong>Configuration Maqiatto :</strong><br>
+      Port WebSocket : <strong>8883</strong> (WS non sécurisé)
+    </div>
+
+    <div class="modal-info" id="httpsWarning" style="display:none; background:rgba(255,171,64,.08); border-color:rgba(255,171,64,.3); color:var(--warning)">
+      ⚠️ <strong>Page en HTTPS détectée</strong><br>
+      Pour se connecter à Maqiatto depuis HTTPS, vous devez utiliser un proxy WSS.<br>
+      <a href="DEPLOIEMENT-PROXY.md" style="color:var(--accent)">→ Voir les instructions</a>
+    </div>
+
+    <div class="modal-field"><label>Broker (Proxy WSS ou Maqiatto direct)</label>
+      <input type="text" id="mqttHost" value="mqtt-proxy-piscine.onrender.com"></div>
+    <div class="modal-field"><label>Port WebSocket</label>
+      <input type="number" id="mqttPort" value="443"></div>
+    <div class="modal-field"><label>Utilisateur</label>
+      <input type="text" id="mqttUser" value="francois.soudant@gmail.com"></div>
+    <div class="modal-field"><label>Mot de passe</label>
+      <input type="password" id="mqttPass" value="LeVifZephyr138!"></div>
+
+    <button class="connect-btn" id="connectBtn">Se connecter</button>
+    <div id="mqttError"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COUCHE MÉTIER — pool-model.js
+// Définition des topics, normes, calculs métier, état applicatif
+// ═══════════════════════════════════════════════════════════════════════════
+
+const BASE = 'francois.soudant@gmail.com';
+
+const TOPICS = {
+  mode:        { topic: `${BASE}/PiscineMode`,           unit: '',       min: 0,   max: 2   },
+  ph:          { topic: `${BASE}/Piscine/PH`,            unit: '',       min: 0,   max: 14,  normLow: 7.0,  normHigh: 7.4  },
+  redox:       { topic: `${BASE}/Piscine/Redox`,         unit: 'mV',     min: 0,   max: 800, normLow: 650,  normHigh: 720  },
+  tac:         { topic: `${BASE}/Piscine/TAC`,           unit: 'ppm',    min: 0,   max: 200, normLow: 80,   normHigh: 120  },
+  tds:         { topic: `${BASE}/Piscine/TDS`,           unit: 'ppm',    min: 0,   max: 2000,normLow: 250,  normHigh: 1500 },
+  th:          { topic: `${BASE}/Piscine/TH`,            unit: 'ppm',    min: 0,   max: 300, normLow: 80,   normHigh: 200  },
+  temperature: { topic: `${BASE}/Piscine/Temperature`,   unit: '°C',     min: -10, max: 45,  normLow: 25,   normHigh: 30   },
+  tempMoy:     { topic: `${BASE}/Piscine/TempMoy`,       unit: '°C',     min: -10, max: 45   },
+  tempMin:     { topic: `${BASE}/Piscine/TempMin`,       unit: '°C',     min: -10, max: 45   },
+  tempMax:     { topic: `${BASE}/Piscine/TempMax`,       unit: '°C',     min: -10, max: 45   },
+  frequence:   { topic: `${BASE}/Piscine/Frequence`,     unit: 'Hz',     min: 0,   max: 50   },
+  heureDeb:    { topic: `${BASE}/Piscine/HeureDeb`,      unit: 'h',      min: 0,   max: 23   },
+  minDeb:      { topic: `${BASE}/Piscine/MinDeb`,        unit: 'min',    min: 0,   max: 59   },
+  heureFin:    { topic: `${BASE}/Piscine/HeureFin`,      unit: 'h',      min: 0,   max: 23   },
+  minFin:      { topic: `${BASE}/Piscine/MinFin`,        unit: 'min',    min: 0,   max: 59   },
+  depression:  { topic: `${BASE}/Piscine/Depression`,    unit: 'bar',    min: -50, max: 0,   normLow: -50, normHigh: -3   },
+  volume:      { topic: `${BASE}/Piscine/Volume`,        unit: 'm³',     min: 0,   max: 200  },
+  debitPompe:  { topic: `${BASE}/Piscine/DebitPompe`,    unit: 'm³/h',   min: 0,   max: 20   },
+  pompePH:     { topic: `${BASE}/Piscine/PompePH`,       unit: 'dl/m',   min: 0,   max: 200  },
+  pompeRedox:  { topic: `${BASE}/Piscine/PompeRedox`,    unit: 'dl/m',   min: 0,   max: 200  },
+  freqBasse:   { topic: `${BASE}/Piscine/FreqBasse`,     unit: 'Hz',     min: 0,   max: 50   },
+  freqMoy:     { topic: `${BASE}/Piscine/FreqMoy`,       unit: 'Hz',     min: 0,   max: 50   },
+  freqHaute:   { topic: `${BASE}/Piscine/FreqHaute`,     unit: 'Hz',     min: 0,   max: 50   },
+  minFreqHaut: { topic: `${BASE}/Piscine/minFreqHaut`,   unit: 'min',    min: 0,   max: 59   },
+  etalonPh1:   { topic: `${BASE}/Piscine/EtalonPh1`,     unit: 'pH',     min: 0,   max: 14   },
+  etalonPh2:   { topic: `${BASE}/Piscine/EtalonPh2`,     unit: 'pH',     min: 0,   max: 14   },
+  amorcePH:    { topic: `${BASE}/Piscine/AmorcePH`,      unit: '',       min: 0,   max: 1    },
+  amorceRedox: { topic: `${BASE}/Piscine/AmorceRedox`,   unit: '',       min: 0,   max: 1    },
+};
+
+const TOPIC_TO_KEY = Object.fromEntries(
+  Object.entries(TOPICS).map(([k, v]) => [v.topic, k])
+);
+
+const _state = {};
+
+function setValue(key, raw) {
+  const meta = TOPICS[key];
+  if (!meta) return null;
+  const val = parseFloat(raw);
+  if (isNaN(val)) return null;
+  _state[key] = val;
+  return val;
+}
+
+function getValue(key) {
+  return _state[key] ?? null;
+}
+
+function computeISL() {
+  const ph  = _state.ph;
+  const tds = _state.tds;
+  const th  = _state.th;
+  const tac = _state.tac;
+  const t   = _state.temperature;
+
+  if ([ph, tds, th, tac, t].some(v => v === undefined || v === null)) return null;
+  if (tds <= 1 || th <= 0 || tac <= 0) return null;
+
+  const A   = Math.log10(tds - 1) / 10;
+  const B   = -13.12 * Math.log10(t + 273) + 34.55;
+  const C   = Math.log10(th) - 0.4;
+  const D   = Math.log10(tac);
+  const isl = ph - ((9.3 + A + B) - (C + D));
+
+  return { value: isl, status: classifyISL(isl) };
+}
+
+function classifyISL(isl) {
+  if (isl >= -0.3 && isl <= 0.3) return 'ok';
+  if (Math.abs(isl) > 1)          return 'danger';
+  return 'warn';
+}
+
+function normalize(key, val) {
+  const { min, max } = TOPICS[key];
+  return Math.max(0, Math.min(1, (val - min) / (max - min)));
+}
+
+function classify(key, val) {
+  const meta = TOPICS[key];
+  if (!meta.normLow && !meta.normHigh) return 'info';
+  const inRange = val >= meta.normLow && val <= meta.normHigh;
+  if (inRange) return 'ok';
+  const mid    = (meta.normLow + meta.normHigh) / 2;
+  const spread = (meta.normHigh - meta.normLow);
+  return Math.abs(val - mid) > spread ? 'danger' : 'warn';
+}
+
+function normBounds(key) {
+  const meta = TOPICS[key];
+  if (!meta.normLow && !meta.normHigh) return null;
+  return {
+    low:  normalize(key, meta.normLow),
+    high: normalize(key, meta.normHigh),
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COUCHE TRANSPORT — mqtt-service.js
+// Connexion, publication, souscription MQTT
+// ═══════════════════════════════════════════════════════════════════════════
+
+const ConnectionState = Object.freeze({
+  DISCONNECTED: 'disconnected',
+  CONNECTING:   'connecting',
+  CONNECTED:    'connected',
+  ERROR:        'error',
+});
+
+class MqttService {
+  constructor() {
+    this._client      = null;
+    this._listeners   = {};
+    this._config      = null;
+    this._state       = ConnectionState.DISCONNECTED;
+  }
+
+  on(event, fn) {
+    if (!this._listeners[event]) this._listeners[event] = [];
+    this._listeners[event].push(fn);
+    return this;
+  }
+
+  _emit(event, ...args) {
+    (this._listeners[event] || []).forEach(fn => fn(...args));
+  }
+
+  connect(config) {
+    this._config = config;
+    this._setState(ConnectionState.CONNECTING);
+
+    // Détection automatique WS vs WSS selon le protocole de la page
+    const isSecure = window.location.protocol === 'https:';
+    const proto = config.tls || isSecure ? 'wss' : 'ws';
+    
+    // Si HTTPS et que l'utilisateur a mis un host sans proxy, avertir
+    if (isSecure && config.host.toLowerCase().includes('maqiatto')) {
+      console.warn('⚠️ HTTPS détecté avec Maqiatto direct !');
+      console.warn('💡 Utilisez le proxy WSS ou passez en HTTP');
+    }
+    
+    // Ne pas ajouter le port si c'est le port par défaut (80/443)
+    const defaultPort = proto === 'wss' ? 443 : 80;
+    const portPart = (config.port && config.port !== defaultPort) ? `:${config.port}` : '';
+    const url = `${proto}://${config.host}${portPart}/mqtt`;
+
+    console.log('🔌 Connexion à', url);
+
+    this._client = mqtt.connect(url, {
+      username:        config.user,
+      password:        config.pass,
+      clientId:        'piscine_pwa_' + Math.random().toString(16).slice(2, 10),
+      keepalive:       60,
+      reconnectPeriod: 5000,
+      connectTimeout:  10000,
+    });
+
+    this._client.on('connect',   ()        => this._onConnect());
+    this._client.on('error',     (err)     => this._onError(err));
+    this._client.on('offline',   ()        => this._setState(ConnectionState.DISCONNECTED));
+    this._client.on('reconnect', ()        => this._setState(ConnectionState.CONNECTING));
+    this._client.on('message',   (t, msg)  => this._emit('message', t, msg.toString()));
+  }
+
+  disconnect() {
+    if (this._client) {
+      this._client.end(true);
+      this._client = null;
+    }
+    this._setState(ConnectionState.DISCONNECTED);
+  }
+
+  subscribe(topics) {
+    if (!this._client || !this._isConnected()) return;
+    
+    console.log('📡 Souscription à', topics.length, 'topics...');
+    
+    topics.forEach((t, i) => {
+      setTimeout(() => {
+        this._client.subscribe(t, { qos: 0 }, (err) => {
+          if (err) {
+            console.error('❌ Erreur souscription', t, err);
+          } else {
+            console.log('✅ Souscrit à', t);
+          }
+        });
+      }, i * 10);
+    });
+  }
+
+  publish(topic, value, retain = true) {
+    if (!this._client || !this._isConnected()) return false;
+    this._client.publish(topic, String(value), { qos: 1, retain });
+    return true;
+  }
+
+  get connectionState() { return this._state; }
+  get isConnected()     { return this._state === ConnectionState.CONNECTED; }
+
+  _onConnect() {
+    console.log('✅ MQTT connecté');
+    this._setState(ConnectionState.CONNECTED);
+    this._emit('connected');
+  }
+
+  _onError(err) {
+    console.error('❌ MQTT erreur:', err);
+    this._setState(ConnectionState.ERROR);
+    this._emit('error', err);
+  }
+
+  _setState(newState) {
+    if (this._state === newState) return;
+    this._state = newState;
+    this._emit('stateChange', newState);
+  }
+
+  _isConnected() {
+    return this._state === ConnectionState.CONNECTED;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COUCHE PRÉSENTATION — ui-controller.js
+// Manipulation DOM uniquement, aucune logique métier
+// ═══════════════════════════════════════════════════════════════════════════
+
+class UIController {
+  constructor() {
+    this.onConnect      = null;
+    this.onPublish      = null;
+    this.onModeChange   = null;
+    this.onPrimeRequest = null;
+  }
+
+  init() {
+    this._bindTabs();
+    this._bindConnectForm();
+    this._bindModeButtons();
+    this._bindEditableSliders();
+    this._bindTimeInputs();
+    this._bindParamSliders();
+    this._bindPrimeButtons();
+    this._positionTabIndicator(0);
+  }
+
+  showModal()  { document.getElementById('mqttModal').style.display = 'flex'; }
+  hideModal()  { document.getElementById('mqttModal').style.display = 'none'; }
+  
+  showConnError(msg) {
+    const el = document.getElementById('mqttError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+  
+  hideConnError() { 
+    document.getElementById('mqttError').style.display = 'none'; 
+  }
+
+  setConnectionStatus(state) {
+    const dot   = document.getElementById('connDot');
+    const label = document.getElementById('connLabel');
+    const map = {
+      connected:    { cls: 'connected',    txt: 'Connecté' },
+      connecting:   { cls: 'connecting',   txt: 'Connexion…' },
+      disconnected: { cls: '',             txt: 'Déconnecté' },
+      error:        { cls: '',             txt: 'Erreur' },
+    };
+    const s = map[state] || map.disconnected;
+    dot.className     = s.cls;
+    label.textContent = s.txt;
+  }
+
+  updateMode(mode) {
+    document.querySelectorAll('.mode-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.val) === mode);
+    });
+
+    const isManual = mode === 1;
+    ['hDeb', 'mDeb', 'hFin', 'mFin'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !isManual;
+    });
+
+    const badge = document.getElementById('filtModeBadge');
+    if (badge) {
+      badge.textContent = mode === 1 ? '✏️ Manuel' : mode === 0 ? '⏹ Arrêt' : '⚙️ Auto';
+      badge.className   = 'badge ' + (mode === 1 ? 'ok' : 'warn');
+    }
+  }
+
+  updateReadSlider(key, pct, normLowPct, normHighPct, status, displayVal, badgeText) {
+    const fill  = document.getElementById('fill-'  + key);
+    const thumb = document.getElementById('thumb-' + key);
+    const norm  = document.getElementById('norm-'  + key);
+    const valEl = document.getElementById('val-'   + key);
+    const badge = document.getElementById('badge-' + key);
+
+    if (fill)  { fill.style.width  = pct + '%';  fill.className  = 'slider-fill '  + status; }
+    if (thumb) { thumb.style.left  = pct + '%';  thumb.className = 'slider-thumb ' + status; }
+    if (norm)  {
+      norm.style.left  = normLowPct + '%';
+      norm.style.width = (normHighPct - normLowPct) + '%';
+    }
+    if (valEl) valEl.textContent = displayVal;
+    if (badge) { badge.textContent = badgeText; badge.className = 'badge ' + status; }
+  }
+
+  updateISL(result) {
+    const el    = document.getElementById('val-isl');
+    const badge = document.getElementById('badge-isl');
+    const fill  = document.getElementById('fill-isl');
+    const thumb = document.getElementById('thumb-isl');
+    const norm  = document.getElementById('norm-isl');
+
+    if (!result) {
+      if (el) el.textContent = '--';
+      return;
+    }
+
+    const { value, status } = result;
+    const pct = Math.max(0, Math.min(100, (value + 5) / 10 * 100));
+
+    const colorMap = { ok: 'var(--success)', warn: 'var(--warning)', danger: 'var(--danger)' };
+    const textMap  = {
+      ok:     '✓ Équilibré',
+      warn:   '△ À corriger',
+      danger: '⚠ Corrosif/Entartrant',
+    };
+
+    if (el)    { el.textContent = value.toFixed(2); el.style.color = colorMap[status]; }
+    if (badge) { badge.textContent = textMap[status]; badge.className = 'badge ' + status; }
+    if (fill)  { fill.style.width = pct + '%';  fill.className  = 'slider-fill '  + status; }
+    if (thumb) { thumb.style.left = pct + '%';  thumb.className = 'slider-thumb ' + status; }
+    if (norm)  { norm.style.left = '47%'; norm.style.width = '6%'; }
+  }
+
+  updateSimpleValue(elementId, val, decimals = 1, unit = '') {
+    const el = document.getElementById(elementId);
+    if (el) el.textContent = val.toFixed(decimals) + (unit ? ' ' + unit : '');
+  }
+
+  syncEditableSlider(sliderId, displayId, val, decimals, unit) {
+    const slider  = document.getElementById(sliderId);
+    const display = document.getElementById(displayId);
+    if (slider)  slider.value       = val;
+    if (display) display.textContent = val.toFixed(decimals) + (unit ? ' ' + unit : '');
+  }
+
+  updateTimeField(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  }
+
+  showPriming(key) {
+    const btn  = document.getElementById('btn-' + key);
+    const prog = document.getElementById('prog-' + key);
+    if (!btn) return;
+
+    btn.classList.add('priming');
+    btn.dataset.originalText = btn.textContent;
+
+    let sec = 5;
+    const tick = () => {
+      btn.textContent = `⏱ Amorçage… ${sec}s`;
+      if (sec > 0) { sec--; setTimeout(tick, 1000); }
+    };
+    tick();
+
+    if (prog) {
+      prog.classList.add('active');
+      prog.innerHTML = '<div class="prime-bar"></div>';
+    }
+  }
+
+  hidePriming(key) {
+    const btn  = document.getElementById('btn-' + key);
+    const prog = document.getElementById('prog-' + key);
+    if (btn)  { btn.classList.remove('priming'); btn.textContent = btn.dataset.originalText || key; }
+    if (prog) prog.classList.remove('active');
+  }
+
+  isPriming(key) {
+    const btn = document.getElementById('btn-' + key);
+    return btn ? btn.classList.contains('priming') : false;
+  }
+
+  _bindTabs() {
+    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+      btn.addEventListener('click', () => this._switchTab(i));
+    });
+  }
+
+  _switchTab(n) {
+    document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === n));
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === n));
+    this._positionTabIndicator(n);
+  }
+
+  _positionTabIndicator(n) {
+    const btns = document.querySelectorAll('.tab-btn');
+    const bar  = document.getElementById('tabBar');
+    if (!btns[n] || !bar) return;
+    const b = btns[n].getBoundingClientRect();
+    const r = bar.getBoundingClientRect();
+    const ind = document.getElementById('tabIndicator');
+    if (ind) ind.style.left = (b.left - r.left + b.width / 2 - 15) + 'px';
+  }
+
+  _bindConnectForm() {
+    document.getElementById('connectBtn').addEventListener('click', () => {
+      this.hideConnError();
+      this.onConnect?.({
+        host: document.getElementById('mqttHost').value.trim(),
+        port: parseInt(document.getElementById('mqttPort').value),
+        user: document.getElementById('mqttUser').value.trim(),
+        pass: document.getElementById('mqttPass').value,
+        tls:  false,
+      });
+    });
+  }
+
+  _bindModeButtons() {
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.onModeChange?.(parseInt(btn.dataset.val));
+      });
+    });
+  }
+
+  _bindEditableSliders() {
+    document.getElementById('slider-tac')?.addEventListener('input', e => {
+      this.onPublish?.(TOPICS.tac.topic, e.target.value);
+      document.getElementById('val-tac').textContent = parseFloat(e.target.value).toFixed(0);
+    });
+    
+    document.getElementById('slider-th')?.addEventListener('input', e => {
+      this.onPublish?.(TOPICS.th.topic, e.target.value);
+      document.getElementById('val-th').textContent = parseFloat(e.target.value).toFixed(0);
+    });
+  }
+
+  _bindTimeInputs() {
+    const fields = {
+      hDeb: TOPICS.heureDeb.topic,
+      mDeb: TOPICS.minDeb.topic,
+      hFin: TOPICS.heureFin.topic,
+      mFin: TOPICS.minFin.topic,
+    };
+    Object.entries(fields).forEach(([id, topic]) => {
+      document.getElementById(id)?.addEventListener('change', e => {
+        this.onPublish?.(topic, parseInt(e.target.value));
+      });
+    });
+  }
+
+  _bindParamSliders() {
+    const params = {
+      'p-volume':      { topic: TOPICS.volume.topic,      display: 'pv-volume',      unit: 'm³',   dec: 0 },
+      'p-debitpompe':  { topic: TOPICS.debitPompe.topic,  display: 'pv-debitpompe',  unit: 'm³/h', dec: 1 },
+      'p-pompeph':     { topic: TOPICS.pompePH.topic,     display: 'pv-pompeph',     unit: 'dl/m', dec: 0 },
+      'p-pomperedox':  { topic: TOPICS.pompeRedox.topic,  display: 'pv-pomperedox',  unit: 'dl/m', dec: 0 },
+      'p-freqbasse':   { topic: TOPICS.freqBasse.topic,   display: 'pv-freqbasse',   unit: 'Hz',   dec: 0 },
+      'p-freqmoy':     { topic: TOPICS.freqMoy.topic,     display: 'pv-freqmoy',     unit: 'Hz',   dec: 0 },
+      'p-freqhaute':   { topic: TOPICS.freqHaute.topic,   display: 'pv-freqhaute',   unit: 'Hz',   dec: 0 },
+      'p-minfreqhaut': { topic: TOPICS.minFreqHaut.topic, display: 'pv-minfreqhaut', unit: 'min',  dec: 0 },
+      'p-etalonph1':   { topic: TOPICS.etalonPh1.topic,   display: 'pv-etalonph1',   unit: 'pH',   dec: 1 },
+      'p-etalonph2':   { topic: TOPICS.etalonPh2.topic,   display: 'pv-etalonph2',   unit: 'pH',   dec: 1 },
+    };
+
+    Object.entries(params).forEach(([sliderId, config]) => {
+      const slider = document.getElementById(sliderId);
+      if (!slider) return;
+      
+      slider.addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        const el = document.getElementById(config.display);
+        if (el) el.textContent = v.toFixed(config.dec) + ' ' + config.unit;
+        this.onPublish?.(config.topic, e.target.value);
+      });
+    });
+  }
+
+  _bindPrimeButtons() {
+    document.getElementById('btn-amorceph')?.addEventListener('click', () => {
+      if (!this.isPriming('amorceph')) this.onPrimeRequest?.('amorceph');
+    });
+    
+    document.getElementById('btn-amorceredox')?.addEventListener('click', () => {
+      if (!this.isPriming('amorceredox')) this.onPrimeRequest?.('amorceredox');
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CÂBLAGE — app.js
+// Orchestration des couches via IoC
+// ═══════════════════════════════════════════════════════════════════════════
+
+const mqttService = new MqttService();
+const ui          = new UIController();
+
+// MQTT → Modèle → UI
+mqttService.on('stateChange', state => {
+  ui.setConnectionStatus(state);
+  if (state === ConnectionState.CONNECTED) {
+    ui.hideModal();
+    setTimeout(() => {
+      mqttService.subscribe(Object.values(TOPICS).map(t => t.topic));
+    }, 100);
+  }
+  if (state === ConnectionState.ERROR || state === ConnectionState.DISCONNECTED) {
+    ui.showModal();
+  }
+});
+
+mqttService.on('error', err => {
+  ui.showConnError('Erreur : ' + err.message + '\n⚠️ Vérifiez que le port 8883 est bien WebSocket (WS)');
+});
+
+mqttService.on('message', (topic, rawValue) => {
+  console.log('📨', topic, ':', rawValue);
+  
+  const key = TOPIC_TO_KEY[topic];
+  if (!key) return;
+
+  const val = setValue(key, rawValue);
+  if (val === null) return;
+
+  dispatchToUI(key, val);
+});
+
+// UI → Modèle → MQTT
+ui.onConnect = (config) => {
+  mqttService.connect(config);
+};
+
+ui.onPublish = (topic, value) => {
+  mqttService.publish(topic, value);
+};
+
+ui.onModeChange = (mode) => {
+  mqttService.publish(TOPICS.mode.topic, mode);
+  setValue('mode', mode);
+  ui.updateMode(mode);
+};
+
+ui.onPrimeRequest = (key) => {
+  const topicMap = {
+    'amorceph':    TOPICS.amorcePH.topic,
+    'amorceredox': TOPICS.amorceRedox.topic,
+  };
+  
+  const topic = topicMap[key];
+  if (!topic) return;
+
+  mqttService.publish(topic, '1', false);
+  ui.showPriming(key);
+
+  setTimeout(() => {
+    mqttService.publish(topic, '0', false);
+    ui.hidePriming(key);
+  }, 5000);
+};
+
+// Dispatch messages vers UI
+function dispatchToUI(key, val) {
+  const readSliderKeys = ['ph', 'redox', 'tds', 'temperature', 'depression'];
+  if (readSliderKeys.includes(key)) {
+    updateReadSlider(key, val);
+  }
+
+  if (key === 'tac' || key === 'th') {
+    const meta = TOPICS[key];
+    ui.syncEditableSlider('slider-' + key, 'val-' + key, val, 0, meta.unit);
+  }
+
+  const simpleMap = {
+    tempMoy:   { id: 'val-tempmoy', dec: 1, unit: '°C' },
+    tempMin:   { id: 'val-tempmin', dec: 1, unit: '°C' },
+    tempMax:   { id: 'val-tempmax', dec: 1, unit: '°C' },
+    frequence: { id: 'val-freq',    dec: 1, unit: 'Hz' },
+  };
+  if (simpleMap[key]) {
+    const s = simpleMap[key];
+    ui.updateSimpleValue(s.id, val, s.dec, s.unit);
+  }
+
+  const timeMap = {
+    heureDeb: 'hDeb', minDeb: 'mDeb', heureFin: 'hFin', minFin: 'mFin'
+  };
+  if (timeMap[key]) ui.updateTimeField(timeMap[key], val);
+
+  const paramKeys = ['volume','debitpompe','pompeph','pomperedox',
+                     'freqbasse','freqmoy','freqhaute','minfreqhaut',
+                     'etalonph1','etalonph2'];
+  if (paramKeys.includes(key.toLowerCase())) {
+    const meta = TOPICS[key];
+    const dec  = meta.unit === 'm³/h' || meta.unit === 'pH' ? 1 : 0;
+    ui.syncEditableSlider('p-' + key.toLowerCase(), 'pv-' + key.toLowerCase(), val, dec, meta.unit);
+  }
+
+  if (key === 'mode') ui.updateMode(val);
+
+  const islDeps = ['ph', 'tds', 'th', 'tac', 'temperature'];
+  if (islDeps.includes(key)) {
+    ui.updateISL(computeISL());
+  }
+}
+
+function updateReadSlider(key, val) {
+  const meta    = TOPICS[key];
+  const pct     = normalize(key, val) * 100;
+  const status  = classify(key, val);
+  const bounds  = normBounds(key);
+  const dec     = (meta.max - meta.min) > 50 ? 0 : 1;
+  const display = val.toFixed(dec);
+  const badgeMap = { ok: '✓ OK', warn: '△ Hors norme', danger: '⚠ Alerte', info: '' };
+
+  ui.updateReadSlider(
+    key, pct,
+    bounds ? bounds.low  * 100 : 0,
+    bounds ? bounds.high * 100 : 100,
+    status, display, badgeMap[status]
+  );
+}
+
+// Démarrage
+document.addEventListener('DOMContentLoaded', () => {
+  ui.init();
+  ui.setConnectionStatus(ConnectionState.DISCONNECTED);
+  ui.showModal();
+  
+  // Afficher l'avertissement si HTTPS
+  if (window.location.protocol === 'https:') {
+    document.getElementById('httpsWarning').style.display = 'block';
+    document.getElementById('mqttHost').placeholder = 'votre-proxy.up.railway.app';
+    document.getElementById('mqttPort').value = '443';
+  }
+});
+
+// Enregistrement du Service Worker APRÈS le chargement complet de la page
+window.addEventListener('load', () => {
+  // Attendre que tout soit chargé (y compris MQTT.js)
+  setTimeout(() => {
+    if ('serviceWorker' in navigator) {
+      console.log('🔧 Enregistrement du Service Worker...');
+      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+        .then(registration => {
+          console.log('✅ Service Worker enregistré:', registration.scope);
+          console.log('📦 État:', registration.installing ? 'Installation...' : 
+                                 registration.waiting ? 'En attente...' : 
+                                 registration.active ? 'Actif' : 'Inconnu');
+        })
+        .catch(error => {
+          console.error('❌ Erreur Service Worker:', error);
+          console.error('Détails:', error.message);
+          console.error('Stack:', error.stack);
+        });
+    } else {
+      console.warn('⚠️ Service Workers non supportés par ce navigateur');
+    }
+  }, 500); // Attendre 500ms de plus
+});
+</script>
+</body>
+</html>

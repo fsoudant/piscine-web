@@ -1,0 +1,30 @@
+{
+  "name": "Piscine Manager",
+  "short_name": "Piscine",
+  "description": "Gestion et surveillance de piscine connectée via MQTT",
+  "start_url": "/piscine-complete.html",
+  "display": "standalone",
+  "background_color": "#050e1f",
+  "theme_color": "#0a1628",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%230a1628' width='512' height='512'/%3E%3Ccircle cx='256' cy='200' r='60' fill='%2300d4ff'/%3E%3Cpath d='M 150 280 Q 200 250 256 280 T 362 280' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3Cpath d='M 150 330 Q 200 300 256 330 T 362 330' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3Cpath d='M 150 380 Q 200 350 256 380 T 362 380' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%230a1628' width='512' height='512'/%3E%3Ccircle cx='256' cy='200' r='60' fill='%2300d4ff'/%3E%3Cpath d='M 150 280 Q 200 250 256 280 T 362 280' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3Cpath d='M 150 330 Q 200 300 256 330 T 362 330' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3Cpath d='M 150 380 Q 200 350 256 380 T 362 380' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%230a1628' width='512' height='512'/%3E%3Ccircle cx='256' cy='200' r='60' fill='%2300d4ff'/%3E%3Cpath d='M 150 280 Q 200 250 256 280 T 362 280' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3Cpath d='M 150 330 Q 200 300 256 330 T 362 330' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3Cpath d='M 150 380 Q 200 350 256 380 T 362 380' stroke='%2300d4ff' stroke-width='20' fill='none'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
