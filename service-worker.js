@@ -3,7 +3,7 @@
  * Service Worker pour mise en cache et fonctionnement hors ligne
  */
 
-const CACHE_NAME = 'piscine-v1';
+const CACHE_NAME = 'piscine-v2';
 const urlsToCache = [
   '/',
   '/index.html',
