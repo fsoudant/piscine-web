@@ -6,7 +6,12 @@
 const CACHE_NAME = 'piscine-v1';
 const urlsToCache = [
   '/',
-  '/piscine-complete.html',
+  '/index.html',
+  '/pool-model.js',
+  '/mqtt-service.js',
+  '/ui-controller.js',
+  '/app.js',
+  '/style.css',
   'https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap',
 ];
@@ -82,7 +87,7 @@ self.addEventListener('fetch', event => {
         }).catch(error => {
           console.error('[SW] Erreur fetch:', error);
           // Page de fallback en cas d'erreur
-          return caches.match('/piscine-complete.html');
+          return caches.match('/index.html');
         });
       })
   );

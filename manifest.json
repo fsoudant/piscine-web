@@ -2,7 +2,7 @@
   "name": "Piscine Manager",
   "short_name": "Piscine",
   "description": "Gestion et surveillance de piscine connectée via MQTT",
-  "start_url": "/piscine-complete.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#050e1f",
   "theme_color": "#0a1628",
