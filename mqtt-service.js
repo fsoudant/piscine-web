@@ -87,7 +87,11 @@ export class MqttService {
    * @param {boolean} [retain=true]
    */
   publish(topic, value, retain = true) {
-    if (!this._client || !this._isConnected()) return false;
+    if (!this._client || !this._isConnected()) {
+      console.warn('⚠️ Cannot publish: client not connected');
+      return false;
+    }
+    console.log('📤 Publishing to', topic, ':', value);
     this._client.publish(topic, String(value), { qos: 1, retain });
     return true;
   }

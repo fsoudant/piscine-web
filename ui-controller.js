@@ -57,8 +57,8 @@ export class UIController {
     
     // Formater selon le type de norme
     if (key === 'depression') {
-      // Cas spécial : dépression (valeur négative, affichage "< -3")
-      el.textContent = `Normal < ${normHigh}`;
+      // Cas spécial : dépression (valeur négative, affichage "-3 à -1 bar")
+      el.textContent = `${normLow} à ${normHigh} ${unit}`;
     } else {
       // Cas général : plage min – max
       const low = Number.isInteger(normLow) ? normLow : normLow.toFixed(1);
@@ -131,8 +131,13 @@ export class UIController {
   // ── Mode ──────────────────────────────────────────────────────────────────
 
   updateMode(mode) {
+    const modeNum = typeof mode === 'number' ? mode : parseInt(mode);
+    console.log('🔄 Mise à jour UI mode:', modeNum);
+    
     document.querySelectorAll('.mode-btn').forEach(b => {
-      b.classList.toggle('active', parseInt(b.dataset.val) === mode);
+      const btnVal = parseInt(b.dataset.val);
+      const isActive = btnVal === modeNum;
+      b.classList.toggle('active', isActive);
     });
 
     const isManual = mode === 1;

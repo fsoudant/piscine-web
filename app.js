@@ -74,6 +74,7 @@ ui.onPublish = (topic, value) => {
 };
 
 ui.onModeChange = (mode) => {
+  console.log('🎛️ Mode changé par utilisateur:', mode);
   mqttService.publish(TOPICS.mode.topic, mode);
   setValue('mode', mode);
   ui.updateMode(mode);
@@ -135,7 +136,10 @@ function dispatchToUI(key, val) {
     ui.syncEditableSlider('p-' + key.toLowerCase(), 'pv-' + key.toLowerCase(), val, meta.decimals, meta.unit);
   }
 
-  if (key === 'mode') ui.updateMode(val);
+  if (key === 'mode') {
+    console.log('📨 Mode reçu depuis MQTT:', val, typeof val);
+    ui.updateMode(val);
+  }
 
   const islDeps = ['ph', 'tds', 'th', 'tac', 'temperature'];
   if (islDeps.includes(key)) {
