@@ -27,11 +27,8 @@
 
     <div class="section-title">Mode de fonctionnement</div>
     <div class="card">
-      <div class="mode-picker" id="modePicker">
-        <button class="mode-btn" data-val="0">⏹ Arrêt</button>
-        <button class="mode-btn" data-val="1">🔧 Manuel</button>
-        <button class="mode-btn active" data-val="2">⚙️ Automatique</button>
-      </div>
+      <!-- Généré dynamiquement depuis pool-model.js -->
+      <div class="mode-picker" id="modePicker"></div>
     </div>
 
     <div class="section-title">Physico-chimie</div>
@@ -46,40 +43,42 @@
         <div class="slider-fill" id="fill-ph"></div>
         <div class="slider-thumb" id="thumb-ph"></div>
       </div>
-      <div class="slider-labels"><span>0</span><span>7,0 – 7,4</span><span>14</span></div>
+      <div class="slider-labels"><span id="min-label-ph"></span><span id="norm-label-ph"></span><span id="max-label-ph"></span></div>
     </div>
 
     <div class="card">
       <div class="card-row">
         <div class="card-label">TAC <span class="editable-tag">✏️</span></div>
-        <div><span class="card-value" id="val-tac">--</span><span class="card-unit">ppm</span>
+        <div><span class="card-value" id="val-tac">--</span><span class="card-unit" id="unit-tac"></span>
              <span class="badge" id="badge-tac"></span></div>
       </div>
-      <input type="range" class="edit-slider" id="slider-tac" min="0" max="200" value="100">
-      <div class="slider-labels"><span>0</span><span>Norme : 80 – 120 ppm</span><span>200</span></div>
+      <!-- Configuré dynamiquement depuis pool-model.js -->
+      <input type="range" class="edit-slider" id="slider-tac">
+      <div class="slider-labels"><span id="min-label-tac"></span><span id="norm-label-tac"></span><span id="max-label-tac"></span></div>
     </div>
 
     <div class="card">
       <div class="card-row">
         <div class="card-label">TH — Dureté <span class="editable-tag">✏️</span></div>
-        <div><span class="card-value" id="val-th">--</span><span class="card-unit">ppm</span>
+        <div><span class="card-value" id="val-th">--</span><span class="card-unit" id="unit-th"></span>
              <span class="badge" id="badge-th"></span></div>
       </div>
-      <input type="range" class="edit-slider" id="slider-th" min="0" max="300" value="150">
-      <div class="slider-labels"><span>0</span><span>Norme : 80 – 200 ppm</span><span>300</span></div>
+      <!-- Configuré dynamiquement depuis pool-model.js -->
+      <input type="range" class="edit-slider" id="slider-th">
+      <div class="slider-labels"><span id="min-label-th"></span><span id="norm-label-th"></span><span id="max-label-th"></span></div>
     </div>
 
     <div class="card">
       <div class="card-row">
         <div class="card-label">TDS</div>
-        <div><span class="card-value" id="val-tds">--</span><span class="card-unit">ppm</span></div>
+        <div><span class="card-value" id="val-tds">--</span><span class="card-unit" id="unit-tds"></span></div>
       </div>
       <div class="slider-track">
         <div class="slider-norm" id="norm-tds"></div>
         <div class="slider-fill" id="fill-tds"></div>
         <div class="slider-thumb" id="thumb-tds"></div>
       </div>
-      <div class="slider-labels"><span>0</span><span>250 – 1500 ppm</span><span>2000</span></div>
+      <div class="slider-labels"><span id="min-label-tds"></span><span id="norm-label-tds"></span><span id="max-label-tds"></span></div>
     </div>
 
     <div class="card">
@@ -88,7 +87,7 @@
         <span class="badge" id="badge-isl"></span>
       </div>
       <div class="isl-value" id="val-isl">--</div>
-      <div class="isl-label">Équilibré entre −0,3 et +0,3</div>
+      <div class="isl-label" id="isl-norm-label"></div>
       <div class="slider-track" style="margin-top:8px">
         <div class="slider-norm" id="norm-isl"></div>
         <div class="slider-fill" id="fill-isl"></div>
@@ -100,7 +99,7 @@
     <div class="card">
       <div class="card-row">
         <div class="card-label">Redox</div>
-        <div><span class="card-value" id="val-redox">--</span><span class="card-unit">mV</span>
+        <div><span class="card-value" id="val-redox">--</span><span class="card-unit" id="unit-redox"></span>
              <span class="badge" id="badge-redox"></span></div>
       </div>
       <div class="slider-track">
@@ -108,14 +107,14 @@
         <div class="slider-fill" id="fill-redox"></div>
         <div class="slider-thumb" id="thumb-redox"></div>
       </div>
-      <div class="slider-labels"><span>0</span><span>650 – 720 mV</span><span>800</span></div>
+      <div class="slider-labels"><span id="min-label-redox"></span><span id="norm-label-redox"></span><span id="max-label-redox"></span></div>
     </div>
 
     <div class="section-title">Températures</div>
     <div class="card">
       <div class="card-row">
         <div class="card-label">Température actuelle</div>
-        <div><span class="card-value" id="val-temperature">--</span><span class="card-unit">°C</span>
+        <div><span class="card-value" id="val-temperature">--</span><span class="card-unit" id="unit-temperature"></span>
              <span class="badge" id="badge-temperature"></span></div>
       </div>
       <div class="slider-track">
@@ -123,20 +122,20 @@
         <div class="slider-fill" id="fill-temperature"></div>
         <div class="slider-thumb" id="thumb-temperature"></div>
       </div>
-      <div class="slider-labels"><span>−10</span><span>25 – 30°C</span><span>45</span></div>
+      <div class="slider-labels"><span id="min-label-temperature"></span><span id="norm-label-temperature"></span><span id="max-label-temperature"></span></div>
     </div>
 
     <div class="temp-group">
-      <div class="temp-mini-card"><div class="temp-mini-label">🌡 Moyenne</div><div class="temp-mini-val" id="val-tempmoy">-- °C</div></div>
-      <div class="temp-mini-card"><div class="temp-mini-label">❄️ Minimum</div><div class="temp-mini-val" id="val-tempmin">-- °C</div></div>
-      <div class="temp-mini-card"><div class="temp-mini-label">☀️ Maximum</div><div class="temp-mini-val" id="val-tempmax">-- °C</div></div>
-      <div class="temp-mini-card"><div class="temp-mini-label">🔧 Fréquence</div><div class="temp-mini-val" id="val-freq">-- Hz</div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">🌡 Moyenne</div><div class="temp-mini-val"><span id="val-tempmoy">--</span> <span id="unit-tempmoy"></span></div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">❄️ Minimum</div><div class="temp-mini-val"><span id="val-tempmin">--</span> <span id="unit-tempmin"></span></div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">☀️ Maximum</div><div class="temp-mini-val"><span id="val-tempmax">--</span> <span id="unit-tempmax"></span></div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">🔧 Fréquence</div><div class="temp-mini-val"><span id="val-freq">--</span> <span id="unit-freq"></span></div></div>
     </div>
 
     <div class="card">
       <div class="card-row">
         <div class="card-label">Dépression pompe</div>
-        <div><span class="card-value" id="val-depression">--</span><span class="card-unit">bar</span>
+        <div><span class="card-value" id="val-depression">--</span><span class="card-unit" id="unit-depression"></span>
              <span class="badge" id="badge-depression"></span></div>
       </div>
       <div class="slider-track">
@@ -144,7 +143,7 @@
         <div class="slider-fill" id="fill-depression"></div>
         <div class="slider-thumb" id="thumb-depression"></div>
       </div>
-      <div class="slider-labels"><span>−50</span><span>Normal &lt; −3</span><span>0</span></div>
+      <div class="slider-labels"><span id="min-label-depression"></span><span id="norm-label-depression"></span><span id="max-label-depression"></span></div>
     </div>
 
     <div class="section-title">Plage de filtration</div>
@@ -154,10 +153,10 @@
         <span class="badge warn" id="filtModeBadge">⚙️ Auto</span>
       </div>
       <div class="time-grid">
-        <div class="time-field"><label>Heure début</label><input type="number" id="hDeb" min="0" max="23" value="0" disabled></div>
-        <div class="time-field"><label>Min début</label>  <input type="number" id="mDeb" min="0" max="59" value="0" disabled></div>
-        <div class="time-field"><label>Heure fin</label>  <input type="number" id="hFin" min="0" max="23" value="0" disabled></div>
-        <div class="time-field"><label>Min fin</label>    <input type="number" id="mFin" min="0" max="59" value="0" disabled></div>
+        <div class="time-field"><label>Heure début</label><input type="number" id="hDeb" disabled></div>
+        <div class="time-field"><label>Min début</label>  <input type="number" id="mDeb" disabled></div>
+        <div class="time-field"><label>Heure fin</label>  <input type="number" id="hFin" disabled></div>
+        <div class="time-field"><label>Min fin</label>    <input type="number" id="mFin" disabled></div>
       </div>
     </div>
 
@@ -169,13 +168,13 @@
     <div class="card">
       <div class="param-row">
         <div class="param-header"><span class="param-label">Volume piscine</span><span class="param-val" id="pv-volume">--</span></div>
-        <input type="range" class="edit-slider" id="p-volume" min="0" max="200" value="0" step="1">
-        <div class="slider-labels"><span>0 m³</span><span>200 m³</span></div>
+        <input type="range" class="edit-slider" id="p-volume">
+        <div class="slider-labels"><span id="min-label-p-volume"></span><span id="max-label-p-volume"></span></div>
       </div>
       <div class="param-row" style="margin-bottom:0">
         <div class="param-header"><span class="param-label">Débit pompe</span><span class="param-val" id="pv-debitpompe">--</span></div>
-        <input type="range" class="edit-slider" id="p-debitpompe" min="0" max="20" value="0" step="0.1">
-        <div class="slider-labels"><span>0</span><span>20 m³/h</span></div>
+        <input type="range" class="edit-slider" id="p-debitpompe">
+        <div class="slider-labels"><span id="min-label-p-debitpompe"></span><span id="max-label-p-debitpompe"></span></div>
       </div>
     </div>
 
@@ -183,13 +182,13 @@
     <div class="card">
       <div class="param-row">
         <div class="param-header"><span class="param-label">Débit pompe pH</span><span class="param-val" id="pv-pompeph">--</span></div>
-        <input type="range" class="edit-slider" id="p-pompeph" min="0" max="200" value="0">
-        <div class="slider-labels"><span>0</span><span>200 dl/m</span></div>
+        <input type="range" class="edit-slider" id="p-pompeph">
+        <div class="slider-labels"><span id="min-label-p-pompeph"></span><span id="max-label-p-pompeph"></span></div>
       </div>
       <div class="param-row" style="margin-bottom:0">
         <div class="param-header"><span class="param-label">Débit pompe Redox</span><span class="param-val" id="pv-pomperedox">--</span></div>
-        <input type="range" class="edit-slider" id="p-pomperedox" min="0" max="200" value="0">
-        <div class="slider-labels"><span>0</span><span>200 dl/m</span></div>
+        <input type="range" class="edit-slider" id="p-pomperedox">
+        <div class="slider-labels"><span id="min-label-p-pomperedox"></span><span id="max-label-p-pomperedox"></span></div>
       </div>
     </div>
 
@@ -197,19 +196,19 @@
     <div class="card">
       <div class="param-row">
         <div class="param-header"><span class="param-label">Fréquence basse</span><span class="param-val" id="pv-freqbasse">--</span></div>
-        <input type="range" class="edit-slider" id="p-freqbasse" min="0" max="50" value="0">
+        <input type="range" class="edit-slider" id="p-freqbasse">
       </div>
       <div class="param-row">
         <div class="param-header"><span class="param-label">Fréquence moyenne</span><span class="param-val" id="pv-freqmoy">--</span></div>
-        <input type="range" class="edit-slider" id="p-freqmoy" min="0" max="50" value="0">
+        <input type="range" class="edit-slider" id="p-freqmoy">
       </div>
       <div class="param-row">
         <div class="param-header"><span class="param-label">Fréquence haute</span><span class="param-val" id="pv-freqhaute">--</span></div>
-        <input type="range" class="edit-slider" id="p-freqhaute" min="0" max="50" value="0">
+        <input type="range" class="edit-slider" id="p-freqhaute">
       </div>
       <div class="param-row" style="margin-bottom:0">
         <div class="param-header"><span class="param-label">Minutes à fréq. haute</span><span class="param-val" id="pv-minfreqhaut">--</span></div>
-        <input type="range" class="edit-slider" id="p-minfreqhaut" min="0" max="59" value="0">
+        <input type="range" class="edit-slider" id="p-minfreqhaut">
       </div>
     </div>
 
@@ -217,13 +216,13 @@
     <div class="card">
       <div class="param-row">
         <div class="param-header"><span class="param-label">Étalon pH 1</span><span class="param-val" id="pv-etalonph1">--</span></div>
-        <input type="range" class="edit-slider" id="p-etalonph1" min="0" max="14" step="0.1" value="7">
-        <div class="slider-labels"><span>0</span><span>14</span></div>
+        <input type="range" class="edit-slider" id="p-etalonph1">
+        <div class="slider-labels"><span id="min-label-p-etalonph1"></span><span id="max-label-p-etalonph1"></span></div>
       </div>
       <div class="param-row" style="margin-bottom:0">
         <div class="param-header"><span class="param-label">Étalon pH 2</span><span class="param-val" id="pv-etalonph2">--</span></div>
-        <input type="range" class="edit-slider" id="p-etalonph2" min="0" max="14" step="0.1" value="7">
-        <div class="slider-labels"><span>0</span><span>14</span></div>
+        <input type="range" class="edit-slider" id="p-etalonph2">
+        <div class="slider-labels"><span id="min-label-p-etalonph2"></span><span id="max-label-p-etalonph2"></span></div>
       </div>
     </div>
 
