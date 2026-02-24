@@ -13,8 +13,9 @@ const BASE = 'francois.soudant@gmail.com';
 // Modes de fonctionnement
 export const MODES = [
   { value: 0, label: '⏹ Arrêt',        icon: '⏹' },
-  { value: 1, label: '🔧 Manuel',      icon: '🔧' },
-  { value: 2, label: '⚙️ Automatique', icon: '⚙️', default: true },
+  { value: 1, label: '⚙️ Automatique', icon: '⚙️', default: true },
+  { value: 2, label: '🔧 Manuel',      icon: '🔧' },
+ 
 ];
 
 export const TOPICS = {
