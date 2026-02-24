@@ -22,12 +22,85 @@ export class UIController {
   init() {
     this._bindTabs();
     this._bindConnectForm();
-    this._bindModeButtons();
+    // _bindModeButtons sera appelé par buildModeButtons() après création des boutons
     this._bindEditableSliders();
     this._bindTimeInputs();
     this._bindParamSliders();
     this._bindPrimeButtons();
     this._positionTabIndicator(0);
+  }
+
+  // ── Initialisation des labels de normes ──────────────────────────────────
+
+  buildModeButtons(modes) {
+    const container = document.getElementById('modePicker');
+    if (!container) return;
+    
+    container.innerHTML = ''; // Vider le conteneur
+    
+    modes.forEach(mode => {
+      const btn = document.createElement('button');
+      btn.className = 'mode-btn';
+      if (mode.default) btn.classList.add('active');
+      btn.dataset.val = mode.value;
+      btn.textContent = mode.label;
+      container.appendChild(btn);
+    });
+    
+    // Rebinder les événements après création
+    this._bindModeButtons();
+  }
+
+  setNormLabel(key, normLow, normHigh, unit) {
+    const el = document.getElementById(`norm-label-${key}`);
+    if (!el) return;
+    
+    // Formater selon le type de norme
+    if (key === 'depression') {
+      // Cas spécial : dépression (valeur négative, affichage "< -3")
+      el.textContent = `Normal < ${normHigh}`;
+    } else {
+      // Cas général : plage min – max
+      const low = Number.isInteger(normLow) ? normLow : normLow.toFixed(1);
+      const high = Number.isInteger(normHigh) ? normHigh : normHigh.toFixed(1);
+      el.textContent = unit ? `${low} – ${high} ${unit}` : `${low} – ${high}`;
+    }
+  }
+
+  setISLNormLabel(text) {
+    const el = document.getElementById('isl-norm-label');
+    if (el) el.textContent = text;
+  }
+
+  setSliderRange(sliderId, min, max, defaultValue, step) {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+    slider.min = min;
+    slider.max = max;
+    if (step !== undefined) slider.step = step;
+    if (defaultValue !== undefined) {
+      slider.value = defaultValue;
+    }
+  }
+
+  setNumberInputRange(inputId, min, max) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.min = min;
+    input.max = max;
+  }
+
+  setBoundsLabels(key, min, max, unit) {
+    const minEl = document.getElementById(`min-label-${key}`);
+    const maxEl = document.getElementById(`max-label-${key}`);
+    
+    if (minEl) minEl.textContent = unit ? `${min} ${unit}` : min;
+    if (maxEl) maxEl.textContent = unit ? `${max} ${unit}` : max;
+  }
+
+  setUnit(elementId, unit) {
+    const el = document.getElementById(elementId);
+    if (el) el.textContent = unit;
   }
 
   // ── Connexion ─────────────────────────────────────────────────────────────

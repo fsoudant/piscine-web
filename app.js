@@ -6,7 +6,7 @@
 
 'use strict';
 
-import { TOPICS, TOPIC_TO_KEY, setValue, getValue, computeISL, normalize, classify, normBounds } from './pool-model.js';
+import { TOPICS, TOPIC_TO_KEY, MODES, setValue, getValue, computeISL, normalize, classify, normBounds } from './pool-model.js';
 import { MqttService, ConnectionState } from './mqtt-service.js';
 import { UIController } from './ui-controller.js';
 
@@ -107,18 +107,19 @@ function dispatchToUI(key, val) {
 
   if (key === 'tac' || key === 'th') {
     const meta = TOPICS[key];
-    ui.syncEditableSlider('slider-' + key, 'val-' + key, val, 0, meta.unit);
+    ui.syncEditableSlider('slider-' + key, 'val-' + key, val, meta.decimals, meta.unit);
   }
 
   const simpleMap = {
-    tempMoy:   { id: 'val-tempmoy', dec: 1, unit: '°C' },
-    tempMin:   { id: 'val-tempmin', dec: 1, unit: '°C' },
-    tempMax:   { id: 'val-tempmax', dec: 1, unit: '°C' },
-    frequence: { id: 'val-freq',    dec: 1, unit: 'Hz' },
+    tempMoy:   { key: 'tempMoy',   id: 'val-tempmoy' },
+    tempMin:   { key: 'tempMin',   id: 'val-tempmin' },
+    tempMax:   { key: 'tempMax',   id: 'val-tempmax' },
+    frequence: { key: 'frequence', id: 'val-freq' },
   };
   if (simpleMap[key]) {
     const s = simpleMap[key];
-    ui.updateSimpleValue(s.id, val, s.dec, s.unit);
+    const meta = TOPICS[s.key];
+    ui.updateSimpleValue(s.id, val, meta.decimals, meta.unit);
   }
 
   const timeMap = {
@@ -131,8 +132,7 @@ function dispatchToUI(key, val) {
                      'etalonph1','etalonph2'];
   if (paramKeys.includes(key.toLowerCase())) {
     const meta = TOPICS[key];
-    const dec  = meta.unit === 'm³/h' || meta.unit === 'pH' ? 1 : 0;
-    ui.syncEditableSlider('p-' + key.toLowerCase(), 'pv-' + key.toLowerCase(), val, dec, meta.unit);
+    ui.syncEditableSlider('p-' + key.toLowerCase(), 'pv-' + key.toLowerCase(), val, meta.decimals, meta.unit);
   }
 
   if (key === 'mode') ui.updateMode(val);
@@ -148,8 +148,7 @@ function updateReadSlider(key, val) {
   const pct     = normalize(key, val) * 100;
   const status  = classify(key, val);
   const bounds  = normBounds(key);
-  const dec     = (meta.max - meta.min) > 50 ? 0 : 1;
-  const display = val.toFixed(dec);
+  const display = val.toFixed(meta.decimals); // Utilise decimals depuis TOPICS
   const badgeMap = { ok: '✓ OK', warn: '△ Hors norme', danger: '⚠ Alerte', info: '' };
 
   ui.updateReadSlider(
@@ -164,6 +163,92 @@ function updateReadSlider(key, val) {
 
 document.addEventListener('DOMContentLoaded', () => {
   ui.init();
+  
+  // Construire les boutons de mode depuis pool-model.js
+  ui.buildModeButtons(MODES);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INJECTION COMPLÈTE DES MÉTADONNÉES DEPUIS pool-model.js
+  // ═══════════════════════════════════════════════════════════════════════════
+  
+  // 1. Sliders de lecture avec normes (pH, Redox, TDS, Température, Dépression)
+  const readSliderKeys = ['ph', 'redox', 'tds', 'temperature', 'depression'];
+  readSliderKeys.forEach(key => {
+    const meta = TOPICS[key];
+    
+    // Injecter les bornes min/max
+    ui.setBoundsLabels(key, meta.min, meta.max, meta.unit);
+    
+    // Injecter les normes
+    if (meta.normLow !== undefined && meta.normHigh !== undefined) {
+      ui.setNormLabel(key, meta.normLow, meta.normHigh, meta.unit);
+    }
+    
+    // Injecter l'unité
+    const unitId = `unit-${key}`;
+    ui.setUnit(unitId, meta.unit);
+  });
+  
+  // 2. Sliders éditables (TAC, TH)
+  const editableSliderKeys = ['tac', 'th'];
+  editableSliderKeys.forEach(key => {
+    const meta = TOPICS[key];
+    
+    // Configurer le slider
+    const defaultValue = (meta.normLow + meta.normHigh) / 2;
+    ui.setSliderRange(`slider-${key}`, meta.min, meta.max, defaultValue, meta.step);
+    
+    // Injecter les bornes
+    ui.setBoundsLabels(`slider-${key}`, meta.min, meta.max, meta.unit);
+    
+    // Injecter les normes
+    ui.setNormLabel(`slider-${key}`, meta.normLow, meta.normHigh, meta.unit);
+    
+    // Injecter l'unité
+    ui.setUnit(`unit-${key}`, meta.unit);
+  });
+  
+  // 3. Valeurs simples avec unités (tempMoy, tempMin, tempMax, frequence)
+  ['tempMoy', 'tempMin', 'tempMax', 'frequence'].forEach(key => {
+    const meta = TOPICS[key];
+    ui.setUnit(`unit-${key}`, meta.unit);
+  });
+  
+  // 4. Label ISL (norme spéciale)
+  ui.setISLNormLabel('Équilibré entre −0,3 et +0,3');
+  
+  // 5. Paramètres (onglet Paramètres)
+  const paramKeys = [
+    { key: 'volume',      id: 'p-volume' },
+    { key: 'debitPompe',  id: 'p-debitpompe' },
+    { key: 'pompePH',     id: 'p-pompeph' },
+    { key: 'pompeRedox',  id: 'p-pomperedox' },
+    { key: 'freqBasse',   id: 'p-freqbasse' },
+    { key: 'freqMoy',     id: 'p-freqmoy' },
+    { key: 'freqHaute',   id: 'p-freqhaute' },
+    { key: 'minFreqHaut', id: 'p-minfreqhaut' },
+    { key: 'etalonPh1',   id: 'p-etalonph1' },
+    { key: 'etalonPh2',   id: 'p-etalonph2' },
+  ];
+  
+  paramKeys.forEach(({ key, id }) => {
+    const meta = TOPICS[key];
+    
+    // Configurer le slider
+    ui.setSliderRange(id, meta.min, meta.max, undefined, meta.step);
+    
+    // Injecter les bornes avec unités
+    ui.setBoundsLabels(id, meta.min, meta.max, meta.unit);
+  });
+  
+  // 6. Inputs de temps (hDeb, mDeb, hFin, mFin)
+  ui.setNumberInputRange('hDeb', TOPICS.heureDeb.min, TOPICS.heureDeb.max);
+  ui.setNumberInputRange('mDeb', TOPICS.minDeb.min, TOPICS.minDeb.max);
+  ui.setNumberInputRange('hFin', TOPICS.heureFin.min, TOPICS.heureFin.max);
+  ui.setNumberInputRange('mFin', TOPICS.minFin.min, TOPICS.minFin.max);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  
   ui.setConnectionStatus(ConnectionState.DISCONNECTED);
   ui.showModal();
 });
