@@ -18,7 +18,7 @@ export const MODES = [
 ];
 
 export const TOPICS = {
-  mode:        { topic: `${BASE}/PiscineMode`,           unit: '',       min: 0,   max: 2,    decimals: 0, step: 1     },
+  mode:        { topic: `${BASE}/Piscine/Mode`,          unit: '',       min: 0,   max: 2,    decimals: 0, step: 1     },
   ph:          { topic: `${BASE}/Piscine/PH`,            unit: '',       min: 6,   max: 9,    decimals: 1, step: 0.1,  normLow: 7.0,  normHigh: 7.4  },
   redox:       { topic: `${BASE}/Piscine/Redox`,         unit: 'mV',     min: 0,   max: 800,  decimals: 0, step: 1,    normLow: 650,  normHigh: 750  },
   tac:         { topic: `${BASE}/Piscine/TAC`,           unit: 'ppm',    min: 0,   max: 200,  decimals: 0, step: 1,    normLow: 80,   normHigh: 120  },
