@@ -346,17 +346,185 @@ export class UIController {
   }
 
   _bindTimeInputs() {
-    const fields = {
-      hDeb: 'francois.soudant@gmail.com/Piscine/HeureDeb',
-      mDeb: 'francois.soudant@gmail.com/Piscine/MinDeb',
-      hFin: 'francois.soudant@gmail.com/Piscine/HeureFin',
-      mFin: 'francois.soudant@gmail.com/Piscine/MinFin',
+    // Maintenant géré par le double slider de filtration
+    this._bindFiltrationSlider();
+  }
+
+  _bindFiltrationSlider() {
+    const track = document.getElementById('filtSliderTrack');
+    const range = document.getElementById('filtRange');
+    const thumbStart = document.getElementById('filtThumbStart');
+    const thumbEnd = document.getElementById('filtThumbEnd');
+    const tooltipStart = document.getElementById('filtTooltipStart');
+    const tooltipEnd = document.getElementById('filtTooltipEnd');
+    
+    if (!track || !thumbStart || !thumbEnd) return;
+    
+    // État interne (en minutes depuis minuit)
+    let startMinutes = 8 * 60;  // 08:00
+    let endMinutes = 20 * 60;   // 20:00
+    let isDragging = null;      // 'start' | 'end' | null
+    
+    // Helpers
+    const minutesToPercent = (min) => (min / (24 * 60)) * 100;
+    const percentToMinutes = (pct) => Math.round((pct / 100) * (24 * 60));
+    const minutesToTime = (min) => {
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
     };
-    Object.entries(fields).forEach(([id, topic]) => {
-      document.getElementById(id)?.addEventListener('change', e => {
-        this.onPublish?.(topic, parseInt(e.target.value));
+    const getDuration = (start, end) => {
+      let diff = end - start;
+      if (diff < 0) diff += 24 * 60;
+      const h = Math.floor(diff / 60);
+      const m = diff % 60;
+      return `${h}h ${m.toString().padStart(2, '0')}min`;
+    };
+    
+    // Mettre à jour l'UI
+    const updateUI = () => {
+      const startPct = minutesToPercent(startMinutes);
+      const endPct = minutesToPercent(endMinutes);
+      
+      thumbStart.style.left = startPct + '%';
+      thumbEnd.style.left = endPct + '%';
+      
+      range.style.left = startPct + '%';
+      range.style.width = (endPct - startPct) + '%';
+      
+      const startTime = minutesToTime(startMinutes);
+      const endTime = minutesToTime(endMinutes);
+      const duration = getDuration(startMinutes, endMinutes);
+      
+      tooltipStart.textContent = startTime;
+      tooltipEnd.textContent = endTime;
+      document.getElementById('filt-start').textContent = startTime;
+      document.getElementById('filt-end').textContent = endTime;
+      document.getElementById('filt-duration').textContent = duration;
+    };
+    
+    // Publier sur MQTT
+    const publish = () => {
+      import('./pool-model.js').then(module => {
+        const startH = Math.floor(startMinutes / 60);
+        const startM = startMinutes % 60;
+        const endH = Math.floor(endMinutes / 60);
+        const endM = endMinutes % 60;
+        
+        this.onPublish?.(module.TOPICS.heureDeb.topic, startH);
+        this.onPublish?.(module.TOPICS.minDeb.topic, startM);
+        this.onPublish?.(module.TOPICS.heureFin.topic, endH);
+        this.onPublish?.(module.TOPICS.minFin.topic, endM);
       });
+    };
+    
+    // Gérer le drag
+    const onMouseDown = (e, type) => {
+      e.preventDefault();
+      isDragging = type;
+      document.body.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+    };
+    
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      
+      const rect = track.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
+      const minutes = percentToMinutes(pct);
+      
+      // Arrondir à 15 min
+      const rounded = Math.round(minutes / 15) * 15;
+      
+      if (isDragging === 'start') {
+        startMinutes = Math.max(0, Math.min(endMinutes - 15, rounded));
+      } else {
+        endMinutes = Math.max(startMinutes + 15, Math.min(24 * 60, rounded));
+      }
+      
+      updateUI();
+    };
+    
+    const onMouseUp = () => {
+      if (isDragging) {
+        publish();
+        isDragging = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+    
+    // Clic sur la track pour déplacer le curseur le plus proche
+    track.addEventListener('click', (e) => {
+      if (e.target !== track && e.target !== range) return;
+      
+      const rect = track.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const pct = (x / rect.width) * 100;
+      const minutes = percentToMinutes(pct);
+      const rounded = Math.round(minutes / 15) * 15;
+      
+      const distStart = Math.abs(rounded - startMinutes);
+      const distEnd = Math.abs(rounded - endMinutes);
+      
+      if (distStart < distEnd) {
+        startMinutes = Math.max(0, Math.min(endMinutes - 15, rounded));
+      } else {
+        endMinutes = Math.max(startMinutes + 15, Math.min(24 * 60, rounded));
+      }
+      
+      updateUI();
+      publish();
     });
+    
+    // Bind events
+    thumbStart.addEventListener('mousedown', (e) => onMouseDown(e, 'start'));
+    thumbEnd.addEventListener('mousedown', (e) => onMouseDown(e, 'end'));
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    
+    // Touch events pour mobile
+    thumbStart.addEventListener('touchstart', (e) => {
+      isDragging = 'start';
+      e.preventDefault();
+    });
+    thumbEnd.addEventListener('touchstart', (e) => {
+      isDragging = 'end';
+      e.preventDefault();
+    });
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const rect = track.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
+      const minutes = percentToMinutes(pct);
+      const rounded = Math.round(minutes / 15) * 15;
+      
+      if (isDragging === 'start') {
+        startMinutes = Math.max(0, Math.min(endMinutes - 15, rounded));
+      } else {
+        endMinutes = Math.max(startMinutes + 15, Math.min(24 * 60, rounded));
+      }
+      updateUI();
+    });
+    document.addEventListener('touchend', () => {
+      if (isDragging) {
+        publish();
+        isDragging = null;
+      }
+    });
+    
+    // Méthode publique pour mettre à jour depuis MQTT
+    this.updateFiltrationTime = (hDeb, mDeb, hFin, mFin) => {
+      startMinutes = (hDeb * 60) + mDeb;
+      endMinutes = (hFin * 60) + mFin;
+      updateUI();
+    };
+    
+    // Init UI
+    updateUI();
   }
 
   _bindParamSliders() {

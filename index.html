@@ -154,15 +154,33 @@
 
     <div class="section-title">Plage de filtration</div>
     <div class="card">
-      <div class="card-row" style="margin-bottom:4px">
+      <div class="card-row" style="margin-bottom:12px">
         <div class="card-label">Programmation</div>
         <span class="badge warn" id="filtModeBadge">⚙️ Auto</span>
       </div>
-      <div class="time-grid">
-        <div class="time-field"><label>Heure début</label><input type="number" id="hDeb" disabled></div>
-        <div class="time-field"><label>Min début</label>  <input type="number" id="mDeb" disabled></div>
-        <div class="time-field"><label>Heure fin</label>  <input type="number" id="hFin" disabled></div>
-        <div class="time-field"><label>Min fin</label>    <input type="number" id="mFin" disabled></div>
+      
+      <div class="filt-time-display">
+        <span class="filt-time-label">Début</span>
+        <span class="filt-time-value" id="filt-start">08:00</span>
+        <span class="filt-time-separator">→</span>
+        <span class="filt-time-label">Fin</span>
+        <span class="filt-time-value" id="filt-end">20:00</span>
+        <span class="filt-duration" id="filt-duration">12h 00min</span>
+      </div>
+      
+      <div class="dual-slider-container">
+        <div class="dual-slider-track" id="filtSliderTrack">
+          <div class="dual-slider-range" id="filtRange"></div>
+          <div class="dual-slider-thumb start" id="filtThumbStart" data-type="start">
+            <div class="dual-slider-tooltip" id="filtTooltipStart">08:00</div>
+          </div>
+          <div class="dual-slider-thumb end" id="filtThumbEnd" data-type="end">
+            <div class="dual-slider-tooltip" id="filtTooltipEnd">20:00</div>
+          </div>
+        </div>
+        <div class="dual-slider-hours">
+          <span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span>
+        </div>
       </div>
     </div>
 

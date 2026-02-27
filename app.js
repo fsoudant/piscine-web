@@ -118,10 +118,21 @@ function dispatchToUI(key, val) {
     ui.updateSimpleValue(s.id, val, meta.decimals, meta.unit);
   }
 
-  const timeMap = {
-    heureDeb: 'hDeb', minDeb: 'mDeb', heureFin: 'hFin', minFin: 'mFin'
-  };
-  if (timeMap[key]) ui.updateTimeField(timeMap[key], val);
+  const timeKeys = ['heureDeb', 'minDeb', 'heureFin', 'minFin'];
+  if (timeKeys.includes(key)) {
+    // Collecter toutes les valeurs de filtration
+    import('./pool-model.js').then(module => {
+      const hDeb = module.getValue('heureDeb') || 0;
+      const mDeb = module.getValue('minDeb') || 0;
+      const hFin = module.getValue('heureFin') || 0;
+      const mFin = module.getValue('minFin') || 0;
+      
+      // Mettre à jour le double slider si tous les paramètres sont définis
+      if (ui.updateFiltrationTime) {
+        ui.updateFiltrationTime(hDeb, mDeb, hFin, mFin);
+      }
+    });
+  }
 
   const paramKeys = ['volume','debitpompe','pompeph','pomperedox',
                      'freqbasse','freqmoy','freqhaute','minfreqhaut',
@@ -236,11 +247,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.setBoundsLabels(id, meta.min, meta.max, meta.unit);
   });
   
-  // 6. Inputs de temps (hDeb, mDeb, hFin, mFin)
-  ui.setNumberInputRange('hDeb', TOPICS.heureDeb.min, TOPICS.heureDeb.max);
-  ui.setNumberInputRange('mDeb', TOPICS.minDeb.min, TOPICS.minDeb.max);
-  ui.setNumberInputRange('hFin', TOPICS.heureFin.min, TOPICS.heureFin.max);
-  ui.setNumberInputRange('mFin', TOPICS.minFin.min, TOPICS.minFin.max);
+  // 6. Double slider de filtration (initialisé dans _bindFiltrationSlider)
+  // Les valeurs hDeb, mDeb, hFin, mFin seront mises à jour automatiquement via dispatchToUI
   
   // ═══════════════════════════════════════════════════════════════════════════
   
