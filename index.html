@@ -48,23 +48,29 @@
 
     <div class="card">
       <div class="card-row">
-        <div class="card-label">TAC <span class="editable-tag">✏️</span></div>
+        <div class="card-label">TAC <span class="editable-tag" title="Cliquez pour modifier">✏️</span></div>
         <div><span class="card-value" id="val-tac">--</span><span class="card-unit" id="unit-tac"></span>
              <span class="badge" id="badge-tac"></span></div>
       </div>
-      <!-- Configuré dynamiquement depuis pool-model.js -->
-      <input type="range" class="edit-slider" id="slider-tac">
+      <div class="slider-track editable-slider" id="track-tac" data-key="tac">
+        <div class="slider-norm" id="norm-tac"></div>
+        <div class="slider-fill" id="fill-tac"></div>
+        <div class="slider-thumb" id="thumb-tac"></div>
+      </div>
       <div class="slider-labels"><span id="min-label-tac"></span><span id="norm-label-tac"></span><span id="max-label-tac"></span></div>
     </div>
 
     <div class="card">
       <div class="card-row">
-        <div class="card-label">TH — Dureté <span class="editable-tag">✏️</span></div>
+        <div class="card-label">TH — Dureté <span class="editable-tag" title="Cliquez pour modifier">✏️</span></div>
         <div><span class="card-value" id="val-th">--</span><span class="card-unit" id="unit-th"></span>
              <span class="badge" id="badge-th"></span></div>
       </div>
-      <!-- Configuré dynamiquement depuis pool-model.js -->
-      <input type="range" class="edit-slider" id="slider-th">
+      <div class="slider-track editable-slider" id="track-th" data-key="th">
+        <div class="slider-norm" id="norm-th"></div>
+        <div class="slider-fill" id="fill-th"></div>
+        <div class="slider-thumb" id="thumb-th"></div>
+      </div>
       <div class="slider-labels"><span id="min-label-th"></span><span id="norm-label-th"></span><span id="max-label-th"></span></div>
     </div>
 

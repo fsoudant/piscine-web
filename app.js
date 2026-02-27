@@ -101,14 +101,9 @@ ui.onPrimeRequest = (key) => {
 // ── DISPATCH MESSAGES VERS UI ──────────────────────────────────────────────
 
 function dispatchToUI(key, val) {
-  const readSliderKeys = ['ph', 'redox', 'tds', 'temperature', 'depression'];
+  const readSliderKeys = ['ph', 'redox', 'tds', 'temperature', 'depression', 'tac', 'th'];
   if (readSliderKeys.includes(key)) {
     updateReadSlider(key, val);
-  }
-
-  if (key === 'tac' || key === 'th') {
-    const meta = TOPICS[key];
-    ui.syncEditableSlider('slider-' + key, 'val-' + key, val, meta.decimals, meta.unit);
   }
 
   const simpleMap = {
@@ -193,20 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.setUnit(unitId, meta.unit);
   });
   
-  // 2. Sliders éditables (TAC, TH)
+  // 2. Sliders éditables (TAC, TH) - Utilisent la même structure que les read sliders
   const editableSliderKeys = ['tac', 'th'];
   editableSliderKeys.forEach(key => {
     const meta = TOPICS[key];
     
-    // Configurer le slider
-    const defaultValue = (meta.normLow + meta.normHigh) / 2;
-    ui.setSliderRange(`slider-${key}`, meta.min, meta.max, defaultValue, meta.step);
-    
-    // Injecter les bornes
-    ui.setBoundsLabels(`slider-${key}`, meta.min, meta.max, meta.unit);
+    // Injecter les bornes min/max
+    ui.setBoundsLabels(key, meta.min, meta.max, meta.unit);
     
     // Injecter les normes
-    ui.setNormLabel(`slider-${key}`, meta.normLow, meta.normHigh, meta.unit);
+    ui.setNormLabel(key, meta.normLow, meta.normHigh, meta.unit);
     
     // Injecter l'unité
     ui.setUnit(`unit-${key}`, meta.unit);

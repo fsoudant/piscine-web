@@ -313,15 +313,35 @@ export class UIController {
   }
 
   _bindEditableSliders() {
-    // TAC
-    document.getElementById('slider-tac')?.addEventListener('input', e => {
-      this.onPublish?.('francois.soudant@gmail.com/Piscine/TAC', e.target.value);
-      document.getElementById('val-tac').textContent = parseFloat(e.target.value).toFixed(0);
-    });
-    // TH
-    document.getElementById('slider-th')?.addEventListener('input', e => {
-      this.onPublish?.('francois.soudant@gmail.com/Piscine/TH', e.target.value);
-      document.getElementById('val-th').textContent = parseFloat(e.target.value).toFixed(0);
+    // Bind des sliders custom éditables (TAC, TH)
+    document.querySelectorAll('.editable-slider').forEach(slider => {
+      slider.addEventListener('click', (e) => {
+        const key = slider.dataset.key;  // 'tac' ou 'th'
+        if (!key) return;
+        
+        // Import dynamique du TOPICS depuis pool-model
+        import('./pool-model.js').then(module => {
+          const meta = module.TOPICS[key];
+          const currentVal = document.getElementById(`val-${key}`).textContent;
+          
+          // Prompt avec la valeur actuelle
+          const newVal = prompt(
+            `Nouvelle valeur pour ${key.toUpperCase()} (${meta.min}-${meta.max} ${meta.unit})`,
+            currentVal !== '--' ? currentVal : ''
+          );
+          
+          if (newVal === null) return;  // Annulation
+          
+          const numVal = parseFloat(newVal);
+          if (isNaN(numVal) || numVal < meta.min || numVal > meta.max) {
+            alert(`Valeur invalide. Entrez un nombre entre ${meta.min} et ${meta.max}.`);
+            return;
+          }
+          
+          // Publier sur MQTT
+          this.onPublish?.(meta.topic, numVal);
+        });
+      });
     });
   }
 
