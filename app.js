@@ -261,7 +261,7 @@ window.addEventListener('load', () => {
   setTimeout(() => {
     if ('serviceWorker' in navigator) {
       console.log('🔧 Enregistrement du Service Worker...');
-      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+      navigator.serviceWorker.register('./service-worker.js', { scope: './' })
         .then(registration => {
           console.log('✅ Service Worker enregistré:', registration.scope);
           console.log('📦 État:', registration.installing ? 'Installation...' : 
