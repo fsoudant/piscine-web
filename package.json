@@ -5,12 +5,18 @@
   "type": "module",
   "main": "api/alexa-webhook.js",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "vercel dev"
   },
    "dependencies": {
      "mqtt": "^5.0.0"
   },
-  "keywords": ["piscine", "iot", "mqtt", "alexa", "pwa"],
+  "keywords": [
+  	"piscine", 
+  	"iot", 
+  	"mqtt", 
+  	"alexa", 
+  	"pwa"
+  ],
   "author": "François Soudant",
   "license": "MIT"
 }
