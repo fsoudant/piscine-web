@@ -101,14 +101,14 @@ export function computeISL() {
   const D   = Math.log10(tac);
   const isl = ph - ((9.3 + A + B) - (C + D));
 
-  return { value: isl, status: classifyISL(isl) };
+ let status;
+  if (isl >= -0.3 && isl <= 0.3) status = 'ok';
+  else if (Math.abs(isl) > 1) status = 'danger';
+  else status = 'warn';
+  
+  return { value: isl, status };
 }
 
-function classifyISL(isl) {
-  if (isl >= -0.3 && isl <= 0.3) return 'ok';
-  if (Math.abs(isl) > 1)          return 'danger';
-  return 'warn';
-}
 
 /**
  * Normalise une valeur dans [0,1] par rapport à son domaine
@@ -141,4 +141,51 @@ export function normBounds(key) {
     low:  normalize(key, meta.normLow),
     high: normalize(key, meta.normHigh),
   };
+}
+/**
+ * Calcule la qualité globale de l'eau
+ */
+export function calculateWaterQuality(state) {
+  let score = 0;
+  let issues = [];
+  
+  // pH (40 points)
+  const phMeta = TOPICS.ph;
+  if (state.ph >= phMeta.normLow && state.ph <= phMeta.normHigh) {
+    score += 40;
+  } else if (state.ph >= phMeta.normLow - 0.2 && state.ph <= phMeta.normHigh + 0.2) {
+    score += 20;
+    issues.push('le pH est légèrement hors norme');
+  } else {
+    issues.push('le pH est hors norme');
+  }
+  
+  // Redox (30 points)
+  const redoxMeta = TOPICS.redox;
+  if (state.redox >= redoxMeta.normLow && state.redox <= redoxMeta.normHigh) {
+    score += 30;
+  } else if (state.redox >= redoxMeta.normLow - 50 && state.redox <= redoxMeta.normHigh + 50) {
+    score += 15;
+    issues.push('le redox est acceptable');
+  } else {
+    issues.push('le redox est hors norme');
+  }
+  
+  // Température (20 points)
+  if (state.temperature >= 24 && state.temperature <= 28) {
+    score += 20;
+  } else {
+    score += 10;
+  }
+  
+  // TAC (10 points)
+  const tacMeta = TOPICS.tac;
+  if (state.tac >= tacMeta.normLow && state.tac <= tacMeta.normHigh) {
+    score += 10;
+  }
+  
+  if (score >= 90) return { quality: 'excellente', issues: [] };
+  if (score >= 70) return { quality: 'bonne', issues };
+  if (score >= 50) return { quality: 'correcte', issues };
+  return { quality: 'mauvaise', issues };
 }

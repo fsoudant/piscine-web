@@ -1,0 +1,16 @@
+{
+  "name": "piscine-unified",
+  "version": "1.0.0",
+  "description": "Système de gestion de piscine connectée - PWA + Alexa Skill",
+  "type": "module",
+  "main": "api/alexa-webhook.js",
+  "scripts": {
+    "dev": "vercel dev",
+  },
+   "dependencies": {
+     "mqtt": "^5.0.0"
+  },
+  "keywords": ["piscine", "iot", "mqtt", "alexa", "pwa"],
+  "author": "François Soudant",
+  "license": "MIT"
+}
