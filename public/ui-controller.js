@@ -320,7 +320,7 @@ export class UIController {
         if (!key) return;
         
         // Import dynamique du TOPICS depuis pool-model
-        import('./pool-model.js').then(module => {
+        import('../shared/pool-model.js').then(module => {
           const meta = module.TOPICS[key];
           const currentVal = document.getElementById(`val-${key}`).textContent;
           
@@ -405,7 +405,7 @@ export class UIController {
     
     // Publier sur MQTT
     const publish = () => {
-      import('./pool-model.js').then(module => {
+      import('../shared/pool-model.js').then(module => {
         const startH = Math.floor(startMinutes / 60);
         const startM = startMinutes % 60;
         const endH = Math.floor(endMinutes / 60);

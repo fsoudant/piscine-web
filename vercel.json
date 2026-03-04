@@ -8,6 +8,10 @@
     {
       "src": "public/**",
       "use": "@vercel/static"
+    },
+    {
+      "src": "shared/**/*.js",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -16,11 +20,18 @@
       "dest": "/api/$1"
     },
     {
+      "src": "/shared/(.*\\.js)",
+      "dest": "/shared/$1",
+      "headers": {
+        "Content-Type": "application/javascript; charset=utf-8"
+      }
+    },
+    {
       "src": "/service-worker.js",
       "dest": "/public/service-worker.js",
       "headers": {
         "Service-Worker-Allowed": "/",
-        "Cache-Control": "public, max-age=0, must-revalidate"
+        "Content-Type": "application/javascript; charset=utf-8"
       }
     },
     {
@@ -28,13 +39,6 @@
       "dest": "/public/manifest.json",
       "headers": {
         "Content-Type": "application/manifest+json"
-      }
-    },
-    {
-      "src": "/shared/(.*\\.js)",
-      "dest": "/shared/$1",
-      "headers": {
-        "Content-Type": "application/javascript; charset=utf-8"
       }
     },
     {
@@ -59,10 +63,5 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ],
-  "github": {
-    "enabled": true,
-    "autoAlias": true,
-    "silent": false
-  }
+  ]
 }
