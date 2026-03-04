@@ -121,7 +121,7 @@ function dispatchToUI(key, val) {
   const timeKeys = ['heureDeb', 'minDeb', 'heureFin', 'minFin'];
   if (timeKeys.includes(key)) {
     // Collecter toutes les valeurs de filtration
-    import('./pool-model.js').then(module => {
+    import('../shared/pool-model.js').then(module => {
       const hDeb = module.getValue('heureDeb') || 0;
       const mDeb = module.getValue('minDeb') || 0;
       const hFin = module.getValue('heureFin') || 0;
