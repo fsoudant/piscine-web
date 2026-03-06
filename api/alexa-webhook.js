@@ -6,7 +6,7 @@ import mqtt from 'mqtt';
 // Connexion MQTT via proxy et lecture des valeurs retained
 async function getPoolState() {
   return new Promise((resolve, reject) => {
-    const client = mqtt.connect('wss://mqtt-proxy-piscine.onrender.com:443', {
+    const client = mqtt.connect('wss://mqtt-proxy-piscine.onrender.com/mqtt', {
       username: process.env.MQTT_USER,
       password: process.env.MQTT_PASS,
       protocol: 'wss',
@@ -28,7 +28,7 @@ async function getPoolState() {
     const timeout = setTimeout(() => {
       client.end();
       reject(new Error('MQTT timeout'));
-    }, 10000);
+    }, 20000);
     
     client.on('connect', () => {
       console.log('✅ MQTT Connected via proxy');
@@ -109,7 +109,7 @@ function calculateWaterQuality(state) {
 // Publier sur MQTT via proxy
 async function publishMQTT(topic, value) {
   return new Promise((resolve, reject) => {
-    const client = mqtt.connect('wss://mqtt-proxy-piscine.onrender.com:443', {
+    const client = mqtt.connect('wss://mqtt-proxy-piscine.onrender.com/mqtt', {
       username: process.env.MQTT_USER,
       password: process.env.MQTT_PASS,
       protocol: 'wss',
@@ -119,7 +119,7 @@ async function publishMQTT(topic, value) {
     const timeout = setTimeout(() => {
       client.end();
       reject(new Error('Publish timeout'));
-    }, 5000);
+    }, 10000);
     
     client.on('connect', () => {
       client.publish(topic, String(value), { qos: 1, retain: true }, (err) => {
