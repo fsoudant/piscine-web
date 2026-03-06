@@ -6,7 +6,7 @@
 
 'use strict';
 
-import { TOPICS, TOPIC_TO_KEY, MODES, setValue, getValue, computeISL, normalize, classify, normBounds } from '../shared/pool-model.js';
+import { TOPICS, TOPIC_TO_KEY, MODES, setValue, getValue, computeISL, normalize, classify, normBounds } from './shared/pool-model.js';
 import { MqttService, ConnectionState } from './mqtt-service.js';
 import { UIController } from './ui-controller.js';
 
