@@ -1,9 +1,8 @@
 // api/alexa-smarthome.js
-// Smart Home Skill API pour contrôle direct Alexa
-
 import mqtt from 'mqtt';
 
-// Connexion MQTT et lecture des valeurs (réutilisé de alexa-webhook.js)
+// --- FONCTIONS UTILITAIRES ---
+
 async function getPoolState() {
   return new Promise((resolve, reject) => {
     const client = mqtt.connect('wss://mqtt-proxy-piscine.onrender.com/mqtt', {
@@ -18,9 +17,6 @@ async function getPoolState() {
       'francois.soudant@gmail.com/Piscine/Temperature',
       'francois.soudant@gmail.com/Piscine/PH',
       'francois.soudant@gmail.com/Piscine/Redox',
-      'francois.soudant@gmail.com/Piscine/TAC',
-      'francois.soudant@gmail.com/Piscine/TH',
-      'francois.soudant@gmail.com/Piscine/TDS',
       'francois.soudant@gmail.com/Piscine/Mode'
     ];
     
@@ -28,44 +24,29 @@ async function getPoolState() {
     const timeout = setTimeout(() => {
       client.end();
       reject(new Error('MQTT timeout'));
-    }, 20000);
+    }, 15000);
     
     client.on('connect', () => {
-      console.log('✅ MQTT Connected via proxy');
       topics.forEach(topic => client.subscribe(topic, { qos: 1 }));
     });
     
     client.on('message', (topic, message) => {
       const value = parseFloat(message.toString());
-      
       if (topic.endsWith('/Temperature')) state.temperature = value;
       else if (topic.endsWith('/PH')) state.ph = value;
       else if (topic.endsWith('/Redox')) state.redox = value;
-      else if (topic.endsWith('/TAC')) state.tac = value;
-      else if (topic.endsWith('/TH')) state.th = value;
-      else if (topic.endsWith('/TDS')) state.tds = value;
       else if (topic.endsWith('/Mode')) state.mode = value;
       
       receivedCount++;
-      
       if (receivedCount >= topics.length) {
         clearTimeout(timeout);
         client.end();
-        console.log('✅ État reçu:', state);
         resolve(state);
       }
-    });
-    
-    client.on('error', (err) => {
-      console.error('❌ MQTT Error:', err.message);
-      clearTimeout(timeout);
-      client.end();
-      reject(err);
     });
   });
 }
 
-// Publier sur MQTT
 async function publishMQTT(topic, value) {
   return new Promise((resolve, reject) => {
     const client = mqtt.connect('wss://mqtt-proxy-piscine.onrender.com/mqtt', {
@@ -78,7 +59,7 @@ async function publishMQTT(topic, value) {
     const timeout = setTimeout(() => {
       client.end();
       reject(new Error('Publish timeout'));
-    }, 10000);
+    }, 5000);
     
     client.on('connect', () => {
       client.publish(topic, String(value), { qos: 1, retain: true }, (err) => {
@@ -88,16 +69,9 @@ async function publishMQTT(topic, value) {
         else resolve();
       });
     });
-    
-    client.on('error', (err) => {
-      clearTimeout(timeout);
-      client.end();
-      reject(err);
-    });
   });
 }
 
-// Générer une réponse d'erreur Smart Home
 function errorResponse(request, errorType, errorMessage) {
   return {
     event: {
@@ -108,31 +82,23 @@ function errorResponse(request, errorType, errorMessage) {
         correlationToken: request.directive.header.correlationToken,
         payloadVersion: '3'
       },
-      endpoint: {
-        endpointId: request.directive.endpoint?.endpointId
-      },
-      payload: {
-        type: errorType,
-        message: errorMessage
-      }
+      endpoint: { endpointId: request.directive.endpoint?.endpointId },
+      payload: { type: errorType, message: errorMessage }
     }
   };
 }
 
-// Handler principal Smart Home
+// --- HANDLER PRINCIPAL ---
+
 export default async function handler(req, res) {
-  console.log('📥 Smart Home Request:', JSON.stringify(req.body, null, 2));
-  
   const request = req.body;
   const namespace = request.directive?.header?.namespace;
   const name = request.directive?.header?.name;
-  
+
   try {
-    // DISCOVERY - Découverte des appareils
+    // 1. DISCOVERY
     if (namespace === 'Alexa.Discovery' && name === 'Discover') {
-      console.log('🔍 Discovery request');
-      
-      const response = {
+      return res.json({
         event: {
           header: {
             namespace: 'Alexa.Discovery',
@@ -141,213 +107,84 @@ export default async function handler(req, res) {
             payloadVersion: '3'
           },
           payload: {
-            endpoints: [
-              // 1. Température
-              {
-                endpointId: 'piscine-temperature',
-                manufacturerName: 'DIY',
-                friendlyName: 'Température piscine',
-                description: 'Capteur de température de la piscine',
-                displayCategories: ['TEMPERATURE_SENSOR'],
-                capabilities: [
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa.TemperatureSensor',
-                    version: '3',
-                    properties: {
-                      supported: [{ name: 'temperature' }],
-                      proactivelyReported: false,
-                      retrievable: true
-                    }
-                  },
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa.EndpointHealth',
-                    version: '3',
-                    properties: {
-                      supported: [{ name: 'connectivity' }],
-                      proactivelyReported: false,
-                      retrievable: true
-                    }
-                  },
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa',
-                    version: '3'
+            endpoints: [{
+              endpointId: 'piscine-unique',
+              manufacturerName: 'DIY',
+              friendlyName: 'piscine',
+              description: 'Système de gestion globale de la piscine',
+              displayCategories: ['OTHER', 'TEMPERATURE_SENSOR'],
+              capabilities: [
+                // Capteur de Température
+                {
+                  type: 'AlexaInterface',
+                  interface: 'Alexa.TemperatureSensor',
+                  version: '3',
+                  properties: {
+                    supported: [{ name: 'temperature' }],
+                    proactivelyReported: false,
+                    retrievable: true
                   }
-                ]
-              },
-              
-              // 2. pH
-              {
-                endpointId: 'piscine-ph',
-                manufacturerName: 'DIY',
-                friendlyName: 'pH piscine',
-                description: 'Capteur de pH de la piscine',
-                displayCategories: ['OTHER'],
-                capabilities: [
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa.RangeController',
-                    instance: 'ph',
-                    version: '3',
-                    properties: {
-                      supported: [{ name: 'rangeValue' }],
-                      proactivelyReported: false,
-                      retrievable: true
-                    },
-                    capabilityResources: {
-                      friendlyNames: [
-                        { '@type': 'text', value: { text: 'pH', locale: 'fr-FR' } },
-                        { '@type': 'text', value: { text: 'Acidité', locale: 'fr-FR' } }
-                      ]
-                    },
-                    configuration: {
-                      supportedRange: {
-                        minimumValue: 0,
-                        maximumValue: 14,
-                        precision: 0.1
-                      }
-                    }
-                  },
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa',
-                    version: '3'
+                },
+                // Contrôle de la filtration (Marche/Arrêt)
+                {
+                  type: 'AlexaInterface',
+                  interface: 'Alexa.PowerController',
+                  version: '3',
+                  properties: {
+                    supported: [{ name: 'powerState' }],
+                    proactivelyReported: false,
+                    retrievable: true
                   }
-                ]
-              },
-              
-              // 3. Redox
-              {
-                endpointId: 'piscine-redox',
-                manufacturerName: 'DIY',
-                friendlyName: 'Redox piscine',
-                description: 'Potentiel Redox (désinfection)',
-                displayCategories: ['OTHER'],
-                capabilities: [
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa.RangeController',
-                    instance: 'redox',
-                    version: '3',
-                    properties: {
-                      supported: [{ name: 'rangeValue' }],
-                      proactivelyReported: false,
-                      retrievable: true
-                    },
-                    capabilityResources: {
-                      friendlyNames: [
-                        { '@type': 'text', value: { text: 'Redox', locale: 'fr-FR' } },
-                        { '@type': 'text', value: { text: 'Désinfection', locale: 'fr-FR' } }
-                      ]
-                    },
-                    configuration: {
-                      supportedRange: {
-                        minimumValue: 0,
-                        maximumValue: 1000,
-                        precision: 1
-                      },
-                      unitOfMeasure: 'millivolts'
-                    }
+                },
+                // Capteur de pH (utilisant RangeController)
+                {
+                  type: 'AlexaInterface',
+                  interface: 'Alexa.RangeController',
+                  instance: 'piscine.ph',
+                  version: '3',
+                  capabilityResources: {
+                    friendlyNames: [{ '@type': 'text', value: { text: 'pH', locale: 'fr-FR' } }]
                   },
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa',
-                    version: '3'
-                  }
-                ]
-              },
-              
-              // 4. Filtration (Switch)
-              {
-                endpointId: 'piscine-filtration',
-                manufacturerName: 'DIY',
-                friendlyName: 'Filtration piscine',
-                description: 'Système de filtration de la piscine',
-                displayCategories: ['SWITCH'],
-                capabilities: [
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa.PowerController',
-                    version: '3',
-                    properties: {
-                      supported: [{ name: 'powerState' }],
-                      proactivelyReported: false,
-                      retrievable: true
-                    }
+                  configuration: {
+                    supportedRange: { minimumValue: 0, maximumValue: 14, precision: 0.1 }
                   },
-                  {
-                    type: 'AlexaInterface',
-                    interface: 'Alexa',
-                    version: '3'
+                  properties: {
+                    supported: [{ name: 'rangeValue' }],
+                    proactivelyReported: false,
+                    retrievable: true
                   }
-                ]
-              }
-            ]
+                },
+                // Capteur Redox
+                {
+                  type: 'AlexaInterface',
+                  interface: 'Alexa.RangeController',
+                  instance: 'piscine.redox',
+                  version: '3',
+                  capabilityResources: {
+                    friendlyNames: [{ '@type': 'text', value: { text: 'Redox', locale: 'fr-FR' } }]
+                  },
+                  configuration: {
+                    supportedRange: { minimumValue: 0, maximumValue: 1000, precision: 1 },
+                    unitOfMeasure: 'millivolts'
+                  },
+                  properties: {
+                    supported: [{ name: 'rangeValue' }],
+                    proactivelyReported: false,
+                    retrievable: true
+                  }
+                },
+                { type: 'AlexaInterface', interface: 'Alexa', version: '3' }
+              ]
+            }]
           }
         }
-      };
-      
-      console.log('✅ Discovery response:', response.event.payload.endpoints.length, 'endpoints');
-      return res.json(response);
+      });
     }
-    
-    // REPORT STATE - Rapporter l'état d'un appareil
+
+    // 2. REPORT STATE (Alexa demande toutes les valeurs d'un coup)
     if (namespace === 'Alexa' && name === 'ReportState') {
-      const endpointId = request.directive.endpoint.endpointId;
-      console.log('📊 ReportState for:', endpointId);
-      
       const state = await getPoolState();
-      const properties = [];
-      
-      if (endpointId === 'piscine-temperature') {
-        properties.push({
-          namespace: 'Alexa.TemperatureSensor',
-          name: 'temperature',
-          value: {
-            value: state.temperature || 0,
-            scale: 'CELSIUS'
-          },
-          timeOfSample: new Date().toISOString(),
-          uncertaintyInMilliseconds: 1000
-        });
-      }
-      
-      if (endpointId === 'piscine-ph') {
-        properties.push({
-          namespace: 'Alexa.RangeController',
-          instance: 'ph',
-          name: 'rangeValue',
-          value: state.ph || 0,
-          timeOfSample: new Date().toISOString(),
-          uncertaintyInMilliseconds: 1000
-        });
-      }
-      
-      if (endpointId === 'piscine-redox') {
-        properties.push({
-          namespace: 'Alexa.RangeController',
-          instance: 'redox',
-          name: 'rangeValue',
-          value: state.redox || 0,
-          timeOfSample: new Date().toISOString(),
-          uncertaintyInMilliseconds: 1000
-        });
-      }
-      
-      if (endpointId === 'piscine-filtration') {
-        const powerState = (state.mode === 1 || state.mode === 2) ? 'ON' : 'OFF';
-        properties.push({
-          namespace: 'Alexa.PowerController',
-          name: 'powerState',
-          value: powerState,
-          timeOfSample: new Date().toISOString(),
-          uncertaintyInMilliseconds: 1000
-        });
-      }
-      
-      const response = {
+      return res.json({
         event: {
           header: {
             namespace: 'Alexa',
@@ -356,27 +193,54 @@ export default async function handler(req, res) {
             correlationToken: request.directive.header.correlationToken,
             payloadVersion: '3'
           },
-          endpoint: {
-            endpointId: endpointId
-          },
+          endpoint: { endpointId: 'piscine-unique' },
           payload: {}
         },
         context: {
-          properties: properties
+          properties: [
+            {
+              namespace: 'Alexa.TemperatureSensor',
+              name: 'temperature',
+              value: { value: state.temperature || 0, scale: 'CELSIUS' },
+              timeOfSample: new Date().toISOString(),
+              uncertaintyInMilliseconds: 1000
+            },
+            {
+              namespace: 'Alexa.PowerController',
+              name: 'powerState',
+              value: (state.mode === 1 || state.mode === 2) ? 'ON' : 'OFF',
+              timeOfSample: new Date().toISOString(),
+              uncertaintyInMilliseconds: 1000
+            },
+            {
+              namespace: 'Alexa.RangeController',
+              instance: 'piscine.ph',
+              name: 'rangeValue',
+              value: state.ph || 0,
+              timeOfSample: new Date().toISOString(),
+              uncertaintyInMilliseconds: 1000
+            },
+            {
+              namespace: 'Alexa.RangeController',
+              instance: 'piscine.redox',
+              name: 'rangeValue',
+              value: state.redox || 0,
+              timeOfSample: new Date().toISOString(),
+              uncertaintyInMilliseconds: 1000
+            }
+          ]
         }
-      };
-      
-      console.log('✅ StateReport:', properties);
-      return res.json(response);
+      });
     }
-    
-    // TURN ON - Allumer la filtration
-    if (namespace === 'Alexa.PowerController' && name === 'TurnOn') {
-      console.log('🟢 TurnOn filtration');
+
+    // 3. COMMANDES (PowerController)
+    if (namespace === 'Alexa.PowerController') {
+      const powerState = (name === 'TurnOn') ? 'ON' : 'OFF';
+      const mqttValue = (name === 'TurnOn') ? '1' : '0';
       
-      await publishMQTT('francois.soudant@gmail.com/Piscine/Mode', '1');
-      
-      const response = {
+      await publishMQTT('francois.soudant@gmail.com/Piscine/Mode', mqttValue);
+
+      return res.json({
         event: {
           header: {
             namespace: 'Alexa',
@@ -385,67 +249,24 @@ export default async function handler(req, res) {
             correlationToken: request.directive.header.correlationToken,
             payloadVersion: '3'
           },
-          endpoint: {
-            endpointId: 'piscine-filtration'
-          },
+          endpoint: { endpointId: 'piscine-unique' },
           payload: {}
         },
         context: {
           properties: [{
             namespace: 'Alexa.PowerController',
             name: 'powerState',
-            value: 'ON',
+            value: powerState,
             timeOfSample: new Date().toISOString(),
             uncertaintyInMilliseconds: 500
           }]
         }
-      };
-      
-      console.log('✅ Filtration turned ON');
-      return res.json(response);
+      });
     }
-    
-    // TURN OFF - Éteindre la filtration
-    if (namespace === 'Alexa.PowerController' && name === 'TurnOff') {
-      console.log('🔴 TurnOff filtration');
-      
-      await publishMQTT('francois.soudant@gmail.com/Piscine/Mode', '0');
-      
-      const response = {
-        event: {
-          header: {
-            namespace: 'Alexa',
-            name: 'Response',
-            messageId: request.directive.header.messageId,
-            correlationToken: request.directive.header.correlationToken,
-            payloadVersion: '3'
-          },
-          endpoint: {
-            endpointId: 'piscine-filtration'
-          },
-          payload: {}
-        },
-        context: {
-          properties: [{
-            namespace: 'Alexa.PowerController',
-            name: 'powerState',
-            value: 'OFF',
-            timeOfSample: new Date().toISOString(),
-            uncertaintyInMilliseconds: 500
-          }]
-        }
-      };
-      
-      console.log('✅ Filtration turned OFF');
-      return res.json(response);
-    }
-    
-    // Directive non supportée
-    console.warn('⚠️ Unsupported directive:', namespace, name);
-    return res.json(errorResponse(request, 'INVALID_DIRECTIVE', 'Directive not supported'));
-    
+
+    return res.json(errorResponse(request, 'INVALID_DIRECTIVE', 'Directive non supportée'));
+
   } catch (error) {
-    console.error('❌ Error:', error);
     return res.json(errorResponse(request, 'INTERNAL_ERROR', error.message));
   }
 }
