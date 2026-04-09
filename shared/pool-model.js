@@ -57,12 +57,24 @@ export const TOPIC_TO_KEY = Object.fromEntries(
 // ── ÉTAT APPLICATIF ────────────────────────────────────────────────────────
 const _state = {};
 
+// Cache pour les résultats de calculs coûteux
+const _cache = {
+  isl: null,
+  islDeps: { ph: null, tds: null, th: null, tac: null, temperature: null }
+};
+
 export function setValue(key, raw) {
   const meta = TOPICS[key];
   if (!meta) return null;
   const val = parseFloat(raw);
   if (isNaN(val)) return null;
   _state[key] = val;
+  
+  // Invalider le cache ISL si une dépendance change
+  if (key in _cache.islDeps) {
+    _cache.isl = null;
+  }
+  
   return val;
 }
 
@@ -86,6 +98,11 @@ export function getAllValues() {
  * @returns {{ value: number, status: string }|null}
  */
 export function computeISL() {
+  // Vérifier le cache en premier
+  if (_cache.isl !== null) {
+    return _cache.isl;
+  }
+
   const ph  = _state.ph;
   const tds = _state.tds;
   const th  = _state.th;
@@ -101,12 +118,14 @@ export function computeISL() {
   const D   = Math.log10(tac);
   const isl = ph - ((9.3 + A + B) - (C + D));
 
- let status;
+  let status;
   if (isl >= -0.3 && isl <= 0.3) status = 'ok';
   else if (Math.abs(isl) > 1) status = 'danger';
   else status = 'warn';
   
-  return { value: isl, status };
+  // Mettre en cache le résultat
+  _cache.isl = { value: isl, status };
+  return _cache.isl;
 }
 
 

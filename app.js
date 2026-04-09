@@ -6,7 +6,8 @@
 
 'use strict';
 
-import { TOPICS, TOPIC_TO_KEY, MODES, setValue, getValue, computeISL, normalize, classify, normBounds } from './shared/pool-model.js';
+// Import statique unique pour éviter les chargements répétés
+import { TOPICS, TOPIC_TO_KEY, MODES, setValue, getValue, computeISL, normalize, classify, normBounds, getAllValues } from './shared/pool-model.js';
 import { MqttService, ConnectionState } from './mqtt-service.js';
 import { UIController } from './ui-controller.js';
 
@@ -20,6 +21,13 @@ const MQTT_PROXY_CONFIG = {
 // ── INITIALISATION ─────────────────────────────────────────────────────────
 const mqttService = new MqttService();
 const ui = new UIController();
+
+// Cache pour éviter les appels DOM répétés
+let _islCache = null;
+let _islDirty = true;
+
+// Marqueur pour indiquer que le modèle est chargé
+const MODEL_READY = Promise.resolve({ TOPICS, getValue, computeISL, normalize, classify, normBounds });
 
 // ── MQTT → MODÈLE → UI ─────────────────────────────────────────────────────
 
@@ -120,18 +128,16 @@ function dispatchToUI(key, val) {
 
   const timeKeys = ['heureDeb', 'minDeb', 'heureFin', 'minFin'];
   if (timeKeys.includes(key)) {
-    // Collecter toutes les valeurs de filtration
-    import('../shared/pool-model.js').then(module => {
-      const hDeb = module.getValue('heureDeb') || 0;
-      const mDeb = module.getValue('minDeb') || 0;
-      const hFin = module.getValue('heureFin') || 0;
-      const mFin = module.getValue('minFin') || 0;
-      
-      // Mettre à jour le double slider si tous les paramètres sont définis
-      if (ui.updateFiltrationTime) {
-        ui.updateFiltrationTime(hDeb, mDeb, hFin, mFin);
-      }
-    });
+    // Utiliser les valeurs en cache au lieu d'un import dynamique
+    const hDeb = getValue('heureDeb') || 0;
+    const mDeb = getValue('minDeb') || 0;
+    const hFin = getValue('heureFin') || 0;
+    const mFin = getValue('minFin') || 0;
+    
+    // Mettre à jour le double slider si tous les paramètres sont définis
+    if (ui.updateFiltrationTime) {
+      ui.updateFiltrationTime(hDeb, mDeb, hFin, mFin);
+    }
   }
 
   const paramKeys = ['volume','debitpompe','pompeph','pomperedox',
@@ -147,8 +153,10 @@ function dispatchToUI(key, val) {
     ui.updateMode(val);
   }
 
+  // Invalider le cache ISL quand une dépendance change
   const islDeps = ['ph', 'tds', 'th', 'tac', 'temperature'];
   if (islDeps.includes(key)) {
+    _islDirty = true;
     ui.updateISL(computeISL());
   }
 }
@@ -172,6 +180,9 @@ function updateReadSlider(key, val) {
 // ── DÉMARRAGE ──────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Injecter le cache TOPICS dans UIController pour éviter les imports dynamiques
+  ui.setTopicsCache(TOPICS);
+  
   ui.init();
   
   // Construire les boutons de mode depuis pool-model.js

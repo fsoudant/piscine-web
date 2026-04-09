@@ -7,6 +7,9 @@
 
 'use strict';
 
+// Référence aux métadonnées TOPICS (injectée par app.js si nécessaire)
+let _topicsCache = null;
+
 export class UIController {
 
   constructor() {
@@ -15,6 +18,11 @@ export class UIController {
     this.onPublish        = null;   // (topic, value) => void
     this.onModeChange     = null;   // (mode: 0|1|2) => void
     this.onPrimeRequest   = null;   // (key: 'amorcePH'|'amorceRedox') => void
+  }
+  
+  // Injecter le cache TOPICS pour éviter les imports dynamiques
+  setTopicsCache(topics) {
+    _topicsCache = topics;
   }
 
   // ── Initialisation ────────────────────────────────────────────────────────
@@ -319,28 +327,31 @@ export class UIController {
         const key = slider.dataset.key;  // 'tac' ou 'th'
         if (!key) return;
         
-        // Import dynamique du TOPICS depuis pool-model
-        import('../shared/pool-model.js').then(module => {
-          const meta = module.TOPICS[key];
-          const currentVal = document.getElementById(`val-${key}`).textContent;
-          
-          // Prompt avec la valeur actuelle
-          const newVal = prompt(
-            `Nouvelle valeur pour ${key.toUpperCase()} (${meta.min}-${meta.max} ${meta.unit})`,
-            currentVal !== '--' ? currentVal : ''
-          );
-          
-          if (newVal === null) return;  // Annulation
-          
-          const numVal = parseFloat(newVal);
-          if (isNaN(numVal) || numVal < meta.min || numVal > meta.max) {
-            alert(`Valeur invalide. Entrez un nombre entre ${meta.min} et ${meta.max}.`);
-            return;
-          }
-          
-          // Publier sur MQTT
-          this.onPublish?.(meta.topic, numVal);
-        });
+        // Utiliser le cache TOPICS si disponible
+        const meta = _topicsCache ? _topicsCache[key] : null;
+        if (!meta) {
+          console.warn('TOPICS non initialisé pour', key);
+          return;
+        }
+        
+        const currentVal = document.getElementById(`val-${key}`).textContent;
+        
+        // Prompt avec la valeur actuelle
+        const newVal = prompt(
+          `Nouvelle valeur pour ${key.toUpperCase()} (${meta.min}-${meta.max} ${meta.unit})`,
+          currentVal !== '--' ? currentVal : ''
+        );
+        
+        if (newVal === null) return;  // Annulation
+        
+        const numVal = parseFloat(newVal);
+        if (isNaN(numVal) || numVal < meta.min || numVal > meta.max) {
+          alert(`Valeur invalide. Entrez un nombre entre ${meta.min} et ${meta.max}.`);
+          return;
+        }
+        
+        // Publier sur MQTT
+        this.onPublish?.(meta.topic, numVal);
       });
     });
   }
@@ -405,17 +416,19 @@ export class UIController {
     
     // Publier sur MQTT
     const publish = () => {
-      import('../shared/pool-model.js').then(module => {
-        const startH = Math.floor(startMinutes / 60);
-        const startM = startMinutes % 60;
-        const endH = Math.floor(endMinutes / 60);
-        const endM = endMinutes % 60;
-        
-        this.onPublish?.(module.TOPICS.heureDeb.topic, startH);
-        this.onPublish?.(module.TOPICS.minDeb.topic, startM);
-        this.onPublish?.(module.TOPICS.heureFin.topic, endH);
-        this.onPublish?.(module.TOPICS.minFin.topic, endM);
-      });
+      if (!_topicsCache) {
+        console.warn('TOPICS non initialisé, impossible de publier');
+        return;
+      }
+      const startH = Math.floor(startMinutes / 60);
+      const startM = startMinutes % 60;
+      const endH = Math.floor(endMinutes / 60);
+      const endM = endMinutes % 60;
+      
+      this.onPublish?.(_topicsCache.heureDeb.topic, startH);
+      this.onPublish?.(_topicsCache.minDeb.topic, startM);
+      this.onPublish?.(_topicsCache.heureFin.topic, endH);
+      this.onPublish?.(_topicsCache.minFin.topic, endM);
     };
     
     // Gérer le drag
