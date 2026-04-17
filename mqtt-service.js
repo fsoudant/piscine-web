@@ -57,8 +57,9 @@ export class MqttService {
       password:        config.pass,
       clientId:        'piscine_pwa_' + Math.random().toString(16).slice(2, 10),
       keepalive:       60,
+      clean:           false, // ajout fs
       reconnectPeriod: 5000,
-      connectTimeout:  10000,
+      connectTimeout:  30000, // 10000,
     });
 
     this._client.on('connect',   ()        => this._onConnect());
