@@ -7,7 +7,7 @@
 'use strict';
 
 // Import statique unique pour éviter les chargements répétés
-import { TOPICS, TOPIC_TO_KEY, MODES, setValue, getValue, computeISL, normalize, classify, normBounds, getAllValues } from './shared/pool-model.js';
+import { TOPICS, TOPIC_TO_KEY, MODES, setValue, getValue, computeISL, normalize, classify, normBounds, getAllValues, initPool } from './shared/pool-model.js';
 import { MqttService, ConnectionState } from './mqtt-service.js';
 import { UIController } from './ui-controller.js';
 
@@ -21,6 +21,9 @@ const MQTT_PROXY_CONFIG = {
 // ── INITIALISATION ─────────────────────────────────────────────────────────
 const mqttService = new MqttService();
 const ui = new UIController();
+
+// Initialiser le Pool avec le service MQTT pour activer les publications automatiques
+initPool(mqttService);
 
 // Cache pour éviter les appels DOM répétés
 let _islCache = null;
@@ -83,8 +86,7 @@ ui.onPublish = (topic, value) => {
 
 ui.onModeChange = (mode) => {
   console.log('🎛️ Mode changé par utilisateur:', mode);
-  mqttService.publish(TOPICS.mode.topic, mode);
-  setValue('mode', mode);
+  setValue('mode', mode); // Le setter gère la validation et la publication MQTT
   ui.updateMode(mode);
 };
 
@@ -97,13 +99,12 @@ ui.onPrimeRequest = (key) => {
   const topic = topicMap[key];
   if (!topic) return;
 
-  mqttService.publish(topic, '1', false);
+  // Déclenche le setter qui valide et publie MQTT automatiquement
+  setValue(key === 'amorceph' ? 'amorcePH' : 'amorceRedox', 1);
   ui.showPriming(key);
 
-  setTimeout(() => {
-    mqttService.publish(topic, '0', false);
-    ui.hidePriming(key);
-  }, 5000);
+  // L'ESP12F gère la temporisation et repasse à 0 via MQTT
+  // La réception du message MQTT mettra à jour l'UI automatiquement
 };
 
 // ── DISPATCH MESSAGES VERS UI ──────────────────────────────────────────────
