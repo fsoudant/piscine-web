@@ -118,7 +118,7 @@ export class Pool {
   }
 
   #publishIfChanged(topicKey, oldValue, newValue) {
-    if (oldValue!= null && oldValue !== newValue && this.#mqttService) {
+    if (oldValue != null && oldValue !== newValue && this.#mqttService) {
       const topic = TOPICS[topicKey].topic;
       this.#mqttService.publish(topic, newValue, true);
     }
