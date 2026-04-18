@@ -40,7 +40,7 @@ export const TOPICS = {
   freqBasse:   { topic: `${BASE}/Piscine/FreqBasse`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
   freqMoy:     { topic: `${BASE}/Piscine/FreqMoy`,       unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
   freqHaute:   { topic: `${BASE}/Piscine/FreqHaute`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
-  minFreqHaut: { topic: `${BASE}/Piscine/minFreqHaut`,   unit: 'min',    min: 0,   max: 59,   decimals: 0, step: 1     },
+  minFreqHaut: { topic: `${BASE}/Piscine/MinFreqHaut`,   unit: 'min',    min: 0,   max: 60,   decimals: 0, step: 1     },
   etalonPh1:   { topic: `${BASE}/Piscine/EtalonPh1`,     unit: '',       min: 0,   max: 14,   decimals: 2, step: 0.01  },
   etalonPh2:   { topic: `${BASE}/Piscine/EtalonPh2`,     unit: '',       min: 0,   max: 14,   decimals: 2, step: 0.01  },
   amorcePH:    { topic: `${BASE}/Piscine/AmorcePH`,      unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
