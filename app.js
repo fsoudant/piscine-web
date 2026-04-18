@@ -168,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const meta = TOPICS[key];
     ui.setSliderRange(id, meta.min, meta.max, undefined, meta.step);
     ui.setBoundsLabels(id, meta.min, meta.max, meta.unit);
+    ui.bindParamSlider(id, 'pv-' + id.slice(2), meta.topic, meta.decimals, meta.unit);
   });
 
   ui.setConnectionStatus(ConnectionState.DISCONNECTED);

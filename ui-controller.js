@@ -33,7 +33,7 @@ export class UIController {
     // _bindModeButtons sera appelé par buildModeButtons() après création des boutons
     this._bindEditableSliders();
     this._bindTimeInputs();
-    this._bindParamSliders();
+    // Les sliders paramètres sont liés explicitement via bindParamSlider() dans app.js
     this._bindPrimeButtons();
     this._positionTabIndicator(0);
   }
@@ -540,21 +540,32 @@ export class UIController {
     updateUI();
   }
 
-  _bindParamSliders() {
-    document.querySelectorAll('[data-param-topic]').forEach(slider => {
-      const topic   = slider.dataset.paramTopic;
-      const display = slider.dataset.paramDisplay;
-      const unit    = slider.dataset.paramUnit;
-      const dec     = parseFloat(slider.step || 1) < 1 ? 1 : 0;
+  /**
+   * Lie un slider paramètre à son affichage et à la publication MQTT.
+   * Appelé explicitement depuis app.js pour chaque paramètre, après que
+   * les métadonnées (topic, decimals, unit) sont disponibles.
+   *
+   * @param {string} sliderId  ID de l'<input type="range">
+   * @param {string} displayId ID de l'élément affichant la valeur courante
+   * @param {string} topic     Topic MQTT cible
+   * @param {number} decimals  Nombre de décimales pour l'affichage
+   * @param {string} unit      Unité affichée
+   */
+  bindParamSlider(sliderId, displayId, topic, decimals, unit) {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
 
-      slider.addEventListener('input', e => {
-        const v = parseFloat(e.target.value);
-        if (display) {
-          const el = document.getElementById(display);
-          if (el) el.textContent = v.toFixed(dec) + ' ' + unit;
-        }
-        this.onPublish?.(topic, e.target.value);
-      });
+    slider.addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
+
+      // Mise à jour immédiate de l'affichage pendant le glissement
+      const displayEl = document.getElementById(displayId);
+      if (displayEl) {
+        displayEl.textContent = val.toFixed(decimals) + (unit ? '\u00a0' + unit : '');
+      }
+
+      // Publication MQTT
+      this.onPublish?.(topic, String(val));
     });
   }
 
