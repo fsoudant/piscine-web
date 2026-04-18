@@ -34,7 +34,7 @@ export const TOPICS = {
   minFin:      { topic: `${BASE}/Piscine/MinFin`,        unit: 'min',    min: 0,   max: 59,   decimals: 0, step: 1     },
   depression:  { topic: `${BASE}/Piscine/Depression`,    unit: 'bar',    min: -5,  max: 0,    decimals: 0, step: 1,    normLow: -3,   normHigh: -1   },
   volume:      { topic: `${BASE}/Piscine/Volume`,        unit: 'm³',     min: 0,   max: 200,  decimals: 0, step: 1     },
-  debitPompe:  { topic: `${BASE}/Piscine/DebitPompe`,    unit: 'm³/h',   min: 0,   max: 20,   decimals: 1, step: 0.1   },
+  debitPompe:  { topic: `${BASE}/Piscine/DebitPompe`,    unit: 'm³/h',   min: 0,   max: 100,  decimals: 1, step: 0.1   },
   pompePH:     { topic: `${BASE}/Piscine/PompePH`,       unit: 'dl/m',   min: 0,   max: 200,  decimals: 0, step: 1     },
   pompeRedox:  { topic: `${BASE}/Piscine/PompeRedox`,    unit: 'dl/m',   min: 0,   max: 200,  decimals: 0, step: 1     },
   freqBasse:   { topic: `${BASE}/Piscine/FreqBasse`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
@@ -414,10 +414,6 @@ export class Pool {
     };
   }
 
-  computeISL() {
-    return this.#isL;
-  }
-
   normalize(key, val) {
     const meta = TOPICS[key];
     if (!meta) return null;
@@ -457,7 +453,7 @@ export class Pool {
     }
     
     // Ajout de l'ISL
-    const isl = this.computeISL();
+    const isl = this.isl;
     if (isl) {
       results.isl = isl;
     }
@@ -494,12 +490,6 @@ export function getValue(key) {
 }
 export function getAllValues() { 
   return _poolInstance ? _poolInstance.getAllValues() : {}; 
-}
-export function computeISL() { 
-  return _poolInstance ? _poolInstance.computeISL() : null; 
-}
-export function getIsl() { 
-  return _poolInstance ? _poolInstance.isl : null; 
 }
 export function normalize(key, val) { 
   return _poolInstance ? _poolInstance.normalize(key, val) : null; 
