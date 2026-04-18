@@ -62,6 +62,7 @@ export class Pool {
   #minFreqHaut; #etalonPh1; #etalonPh2; #amorcePH; #amorceRedox;
   #isL;
   #mqttService = null;
+  #receivingFromMqtt = false; // Guard : empêche le re-publish des valeurs reçues de MQTT
 
   constructor(mqttService = null) {
     this.#mode = null; this.#ph = null; this.#redox = null;
@@ -118,7 +119,10 @@ export class Pool {
   }
 
   #publishIfChanged(topicKey, oldValue, newValue) {
-    if (oldValue != null && oldValue !== newValue && this.#mqttService) {
+    // Ne jamais republier une valeur qui vient d'arriver de MQTT : évite l'echo loop
+    // et le warning "Cannot publish: client not connected" sur connexion lente
+    if (this.#receivingFromMqtt) return;
+    if (oldValue !== newValue && this.#mqttService) {
       const topic = TOPICS[topicKey].topic;
       this.#mqttService.publish(topic, newValue, true);
     }
@@ -374,6 +378,20 @@ export class Pool {
     } 
   }
 
+  /**
+   * Positionne une valeur reçue depuis MQTT — sans déclencher de re-publication.
+   * À utiliser exclusivement dans le handler 'message' de MqttService.
+   */
+  setFromMqtt(key, value) {
+    this.#receivingFromMqtt = true;
+    try {
+      this[key] = value; // route vers le setter public
+    } finally {
+      this.#receivingFromMqtt = false;
+    }
+    return this[key] !== null;
+  }
+
   setValue(key, value) {
     if (!(key in this)) return false;
     // Redirige vers le setter approprié
@@ -419,8 +437,8 @@ export class Pool {
 
   normBounds(key) {
     const meta = TOPICS[key];
-    if (!meta || !meta.normLow && !meta.normHigh) return null;
-    return { min: meta.normLow, max: meta.normHigh };
+    if (!meta || (meta.normLow === undefined && meta.normHigh === undefined)) return null;
+    return { low: meta.normLow, high: meta.normHigh };
   }
 
   calculateWaterQuality() {
@@ -463,6 +481,10 @@ export function getPoolInstance() {
   return _poolInstance;
 }
 
+export function setFromMqtt(key, raw) {
+  if (!_poolInstance) return null;
+  return _poolInstance.setFromMqtt(key, raw) ? _poolInstance.getValue(key) : null;
+}
 export function setValue(key, raw) { 
   if (!_poolInstance) return null;
   return _poolInstance.setValue(key, raw) ? _poolInstance.getValue(key) : null; 

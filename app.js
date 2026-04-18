@@ -1,144 +1,90 @@
 /**
  * app.js
- * Câblage — Dependency Injection / Orchestration
- * Connecte les couches entre elles via IoC
+ * Câblage UI — Orchestration via PoolController
+ *
+ * Ce fichier ne connaît ni MqttService ni Pool directement.
+ * Il câble l'UI (UIController) avec la façade (PoolController).
  */
 
 'use strict';
 
-// Import statique unique pour éviter les chargements répétés
-import { TOPICS, TOPIC_TO_KEY, MODES, setValue, getValue, computeISL, normalize, classify, normBounds, getAllValues, initPool } from './shared/pool-model.js';
-import { MqttService, ConnectionState } from './mqtt-service.js';
-import { UIController } from './ui-controller.js';
+import { PoolController, ConnectionState } from './pool-controller.js';
+import { TOPICS, MODES }                   from './shared/pool-model.js';
+import { UIController }                    from './ui-controller.js';
 
-// Configuration du proxy MQTT (en dur)
-const MQTT_PROXY_CONFIG = {
-  host: 'mqtt-proxy-piscine.onrender.com',
-  port: 443,
-  tls: true  // WSS
-};
+// ── Instances ──────────────────────────────────────────────────────────────
 
-// ── INITIALISATION ─────────────────────────────────────────────────────────
-const mqttService = new MqttService();
-const ui = new UIController();
+const controller = new PoolController();
+const ui         = new UIController();
 
-// Initialiser le Pool avec le service MQTT pour activer les publications automatiques
-initPool(mqttService);
+// ── MQTT → UI ──────────────────────────────────────────────────────────────
 
-// Cache pour éviter les appels DOM répétés
-let _islCache = null;
-let _islDirty = true;
-
-// Marqueur pour indiquer que le modèle est chargé
-const MODEL_READY = Promise.resolve({ TOPICS, getValue, computeISL, normalize, classify, normBounds });
-
-// ── MQTT → MODÈLE → UI ─────────────────────────────────────────────────────
-
-mqttService.on('stateChange', state => {
+controller.on('stateChange', state => {
   ui.setConnectionStatus(state);
-  
+
   if (state === ConnectionState.CONNECTED) {
     ui.hideModal();
-    // Attendre 100ms puis souscrire
-    setTimeout(() => {
-      mqttService.subscribe(Object.values(TOPICS).map(t => t.topic));
-    }, 100);
-  }
-  
-  if (state === ConnectionState.ERROR || state === ConnectionState.DISCONNECTED) {
-    // Ne pas réafficher la modal automatiquement si l'utilisateur s'est déjà connecté
-    // On laisse juste l'indicateur de statut
   }
 });
 
-mqttService.on('error', err => {
+controller.on('error', err => {
   ui.showConnError('Erreur de connexion : ' + err.message);
 });
 
-mqttService.on('message', (topic, rawValue) => {
-  console.log('📨', topic, ':', rawValue);
-  
-  const key = TOPIC_TO_KEY[topic];
-  if (!key) return;
-
-  const val = setValue(key, rawValue);
-  if (val === null) return;
-
+controller.on('valueChange', (key, val) => {
   dispatchToUI(key, val);
 });
 
-// ── UI → MODÈLE → MQTT ─────────────────────────────────────────────────────
+// ── UI → Controller ────────────────────────────────────────────────────────
 
-ui.onConnect = (credentials) => {
-  // Combiner le proxy avec les credentials
-  const config = {
-    ...MQTT_PROXY_CONFIG,
-    user: credentials.user,
-    pass: credentials.pass
-  };
-  
-  mqttService.connect(config);
+ui.onConnect = ({ user, pass }) => {
+  controller.connect(user, pass);
 };
 
 ui.onPublish = (topic, value) => {
-  mqttService.publish(topic, value);
+  controller.publish(topic, value);
 };
 
-ui.onModeChange = (mode) => {
-  console.log('🎛️ Mode changé par utilisateur:', mode);
-  setValue('mode', mode); // Le setter gère la validation et la publication MQTT
+ui.onModeChange = mode => {
+  controller.setValue('mode', mode);
   ui.updateMode(mode);
 };
 
-ui.onPrimeRequest = (key) => {
-  const topicMap = {
-    'amorceph':    TOPICS.amorcePH.topic,
-    'amorceredox': TOPICS.amorceRedox.topic,
-  };
-  
-  const topic = topicMap[key];
-  if (!topic) return;
-
-  // Déclenche le setter qui valide et publie MQTT automatiquement
-  setValue(key === 'amorceph' ? 'amorcePH' : 'amorceRedox', 1);
+ui.onPrimeRequest = key => {
+  const poolKey = key === 'amorceph' ? 'amorcePH' : 'amorceRedox';
+  controller.setValue(poolKey, 1);
   ui.showPriming(key);
-
-  // L'ESP12F gère la temporisation et repasse à 0 via MQTT
-  // La réception du message MQTT mettra à jour l'UI automatiquement
+  // L'ESP12F repasse à 0 via MQTT — l'UI se mettra à jour via 'valueChange'
 };
 
-// ── DISPATCH MESSAGES VERS UI ──────────────────────────────────────────────
+// ── Dispatch valeurs vers UI ───────────────────────────────────────────────
 
 function dispatchToUI(key, val) {
+
   const readSliderKeys = ['ph', 'redox', 'tds', 'temperature', 'depression', 'tac', 'th'];
   if (readSliderKeys.includes(key)) {
     updateReadSlider(key, val);
   }
 
   const simpleMap = {
-    tempMoy:   { key: 'tempMoy',   id: 'val-tempmoy' },
-    tempMin:   { key: 'tempMin',   id: 'val-tempmin' },
-    tempMax:   { key: 'tempMax',   id: 'val-tempmax' },
-    frequence: { key: 'frequence', id: 'val-freq' },
+    tempMoy:   'val-tempmoy',
+    tempMin:   'val-tempmin',
+    tempMax:   'val-tempmax',
+    frequence: 'val-freq',
   };
   if (simpleMap[key]) {
-    const s = simpleMap[key];
-    const meta = TOPICS[s.key];
-    ui.updateSimpleValue(s.id, val, meta.decimals, meta.unit);
+    const meta = TOPICS[key];
+    ui.updateSimpleValue(simpleMap[key], val, meta.decimals, meta.unit);
   }
 
   const timeKeys = ['heureDeb', 'minDeb', 'heureFin', 'minFin'];
-  if (timeKeys.includes(key)) {
-    // Utiliser les valeurs en cache au lieu d'un import dynamique
-    const hDeb = getValue('heureDeb') || 0;
-    const mDeb = getValue('minDeb') || 0;
-    const hFin = getValue('heureFin') || 0;
-    const mFin = getValue('minFin') || 0;
-    
-    // Mettre à jour le double slider si tous les paramètres sont définis
-    if (ui.updateFiltrationTime) {
-      ui.updateFiltrationTime(hDeb, mDeb, hFin, mFin);
-    }
+  if (timeKeys.includes(key) && ui.updateFiltrationTime) {
+    ui.updateFiltrationTime(
+      controller.getValue('heureDeb') ?? 0,
+      controller.getValue('minDeb')   ?? 0,
+      controller.getValue('heureFin') ?? 0,
+      controller.getValue('minFin')   ?? 0,
+    );
   }
 
   const paramKeys = ['volume','debitpompe','pompeph','pomperedox',
@@ -146,147 +92,105 @@ function dispatchToUI(key, val) {
                      'etalonph1','etalonph2'];
   if (paramKeys.includes(key.toLowerCase())) {
     const meta = TOPICS[key];
-    ui.syncEditableSlider('p-' + key.toLowerCase(), 'pv-' + key.toLowerCase(), val, meta.decimals, meta.unit);
+    ui.syncEditableSlider('p-' + key.toLowerCase(), 'pv-' + key.toLowerCase(),
+                          val, meta.decimals, meta.unit);
   }
 
   if (key === 'mode') {
-    console.log('📨 Mode reçu depuis MQTT:', val, typeof val);
     ui.updateMode(val);
   }
 
-  // Invalider le cache ISL quand une dépendance change
-  const islDeps = ['ph', 'tds', 'th', 'tac', 'temperature'];
-  if (islDeps.includes(key)) {
-    _islDirty = true;
-    ui.updateISL(computeISL());
+  if (key === 'isl') {
+    ui.updateISL(val);
   }
 }
 
 function updateReadSlider(key, val) {
   const meta    = TOPICS[key];
-  const pct     = normalize(key, val) * 100;
-  const status  = classify(key, val);
-  const bounds  = normBounds(key);
-  const display = val.toFixed(meta.decimals); // Utilise decimals depuis TOPICS
+  const pct     = controller.normalize(key, val) * 100;
+  const status  = controller.classify(key, val);
+  const bounds  = controller.normBounds(key);
+  const display = val.toFixed(meta.decimals);
   const badgeMap = { ok: '✓ OK', warn: '△ Hors norme', danger: '⚠ Alerte', info: '' };
 
   ui.updateReadSlider(
     key, pct,
     bounds ? bounds.low  * 100 : 0,
     bounds ? bounds.high * 100 : 100,
-    status, display, badgeMap[status]
+    status, display, badgeMap[status],
   );
 }
 
-// ── DÉMARRAGE ──────────────────────────────────────────────────────────────
+// ── Démarrage ──────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Injecter le cache TOPICS dans UIController pour éviter les imports dynamiques
   ui.setTopicsCache(TOPICS);
-  
   ui.init();
-  
-  // Construire les boutons de mode depuis pool-model.js
   ui.buildModeButtons(MODES);
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // INJECTION COMPLÈTE DES MÉTADONNÉES DEPUIS pool-model.js
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  // 1. Sliders de lecture avec normes (pH, Redox, TDS, Température, Dépression)
-  const readSliderKeys = ['ph', 'redox', 'tds', 'temperature', 'depression'];
-  readSliderKeys.forEach(key => {
+
+  // ── Sliders de lecture (pH, Redox, TDS, Température, Dépression) ──────────
+  ['ph', 'redox', 'tds', 'temperature', 'depression'].forEach(key => {
     const meta = TOPICS[key];
-    
-    // Injecter les bornes min/max
     ui.setBoundsLabels(key, meta.min, meta.max, meta.unit);
-    
-    // Injecter les normes
-    if (meta.normLow !== undefined && meta.normHigh !== undefined) {
-      ui.setNormLabel(key, meta.normLow, meta.normHigh, meta.unit);
-    }
-    
-    // Injecter l'unité
-    const unitId = `unit-${key}`;
-    ui.setUnit(unitId, meta.unit);
+    if (meta.normLow !== undefined) ui.setNormLabel(key, meta.normLow, meta.normHigh, meta.unit);
+    ui.setUnit(`unit-${key}`, meta.unit);
   });
-  
-  // 2. Sliders éditables (TAC, TH) - Utilisent la même structure que les read sliders
-  const editableSliderKeys = ['tac', 'th'];
-  editableSliderKeys.forEach(key => {
+
+  // ── Sliders éditables (TAC, TH) ───────────────────────────────────────────
+  ['tac', 'th'].forEach(key => {
     const meta = TOPICS[key];
-    
-    // Injecter les bornes min/max
     ui.setBoundsLabels(key, meta.min, meta.max, meta.unit);
-    
-    // Injecter les normes
     ui.setNormLabel(key, meta.normLow, meta.normHigh, meta.unit);
-    
-    // Injecter l'unité
     ui.setUnit(`unit-${key}`, meta.unit);
   });
-  
-  // 3. Valeurs simples avec unités (tempMoy, tempMin, tempMax, frequence)
+
+  // ── Valeurs simples (températures, fréquence) ─────────────────────────────
   ['tempMoy', 'tempMin', 'tempMax', 'frequence'].forEach(key => {
-    const meta = TOPICS[key];
-    ui.setUnit(`unit-${key}`, meta.unit);
+    ui.setUnit(`unit-${key}`, TOPICS[key].unit);
   });
-  
-  // 4. Label ISL (norme spéciale)
+
+  // ── ISL ───────────────────────────────────────────────────────────────────
   ui.setISLNormLabel('Équilibré entre −0,3 et +0,3');
-  
-  // 5. Paramètres (onglet Paramètres)
-  const paramKeys = [
-    { key: 'volume',      id: 'p-volume' },
-    { key: 'debitPompe',  id: 'p-debitpompe' },
-    { key: 'pompePH',     id: 'p-pompeph' },
-    { key: 'pompeRedox',  id: 'p-pomperedox' },
-    { key: 'freqBasse',   id: 'p-freqbasse' },
-    { key: 'freqMoy',     id: 'p-freqmoy' },
-    { key: 'freqHaute',   id: 'p-freqhaute' },
+
+  // ── Paramètres (onglet Paramètres) ────────────────────────────────────────
+  [
+    { key: 'volume',      id: 'p-volume'      },
+    { key: 'debitPompe',  id: 'p-debitpompe'  },
+    { key: 'pompePH',     id: 'p-pompeph'     },
+    { key: 'pompeRedox',  id: 'p-pomperedox'  },
+    { key: 'freqBasse',   id: 'p-freqbasse'   },
+    { key: 'freqMoy',     id: 'p-freqmoy'     },
+    { key: 'freqHaute',   id: 'p-freqhaute'   },
     { key: 'minFreqHaut', id: 'p-minfreqhaut' },
-    { key: 'etalonPh1',   id: 'p-etalonph1' },
-    { key: 'etalonPh2',   id: 'p-etalonph2' },
-  ];
-  
-  paramKeys.forEach(({ key, id }) => {
+    { key: 'etalonPh1',   id: 'p-etalonph1'   },
+    { key: 'etalonPh2',   id: 'p-etalonph2'   },
+  ].forEach(({ key, id }) => {
     const meta = TOPICS[key];
-    
-    // Configurer le slider
     ui.setSliderRange(id, meta.min, meta.max, undefined, meta.step);
-    
-    // Injecter les bornes avec unités
     ui.setBoundsLabels(id, meta.min, meta.max, meta.unit);
   });
-  
-  // 6. Double slider de filtration (initialisé dans _bindFiltrationSlider)
-  // Les valeurs hDeb, mDeb, hFin, mFin seront mises à jour automatiquement via dispatchToUI
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  
+
   ui.setConnectionStatus(ConnectionState.DISCONNECTED);
   ui.showModal();
 });
 
-// Enregistrement du Service Worker
+// ── Service Worker ─────────────────────────────────────────────────────────
+
 window.addEventListener('load', () => {
   setTimeout(() => {
-    if ('serviceWorker' in navigator) {
-      console.log('🔧 Enregistrement du Service Worker...');
-      navigator.serviceWorker.register('./service-worker.js', { scope: './' })
-        .then(registration => {
-          console.log('✅ Service Worker enregistré:', registration.scope);
-          console.log('📦 État:', registration.installing ? 'Installation...' : 
-                                 registration.waiting ? 'En attente...' : 
-                                 registration.active ? 'Actif' : 'Inconnu');
-        })
-        .catch(error => {
-          console.error('❌ Erreur Service Worker:', error);
-          console.error('Détails:', error.message);
-          console.error('Stack:', error.stack);
-        });
-    } else {
+    if (!('serviceWorker' in navigator)) {
       console.warn('⚠️ Service Workers non supportés par ce navigateur');
+      return;
     }
+    console.log('🔧 Enregistrement du Service Worker...');
+    navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+      .then(reg => {
+        const state = reg.installing ? 'Installation...'
+                    : reg.waiting   ? 'En attente...'
+                    : reg.active    ? 'Actif'
+                    :                 'Inconnu';
+        console.log('✅ Service Worker enregistré:', reg.scope, '—', state);
+      })
+      .catch(err => console.error('❌ Erreur Service Worker:', err));
   }, 500);
 });
