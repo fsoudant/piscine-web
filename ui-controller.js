@@ -17,7 +17,8 @@ export class UIController {
     this.onConnect        = null;   // ({ user, pass }) => void
     this.onPublish        = null;   // (topic, value) => void
     this.onModeChange     = null;   // (mode: 0|1|2) => void
-    this.onPrimeRequest   = null;   // (key: 'amorcePH'|'amorceRedox') => void
+    this.onPrimeRequest   = null;   // (key: 'amorceph'|'amorceredox') => void
+    this.onEtalonnage     = null;   // (poolKey: string) => void  — étalonnage pH/TDS
   }
   
   // Injecter le cache TOPICS pour éviter les imports dynamiques
@@ -35,6 +36,7 @@ export class UIController {
     this._bindTimeInputs();
     // Les sliders paramètres sont liés explicitement via bindParamSlider() dans app.js
     this._bindPrimeButtons();
+    this._bindEtalonnageButtons();
     this._positionTabIndicator(0);
   }
 
@@ -218,6 +220,19 @@ export class UIController {
     if (fill)  { fill.style.width = pct + '%';  fill.className  = 'slider-fill '  + status; }
     if (thumb) { thumb.style.left = pct + '%';  thumb.className = 'slider-thumb ' + status; }
     if (norm)  { norm.style.left = '47%'; norm.style.width = '6%'; }
+  }
+
+  // ── Préconisation ─────────────────────────────────────────────────────────
+
+  /**
+   * Affiche ou masque la carte de préconisation.
+   * @param {string} message  Texte à afficher — chaîne vide pour masquer la carte
+   */
+  updatePreco(message) {
+    const card = document.getElementById('card-preco');
+    const el   = document.getElementById('val-preco');
+    if (el)   el.textContent    = message || '';
+    if (card) card.style.display = message ? '' : 'none';
   }
 
   // ── Valeurs simples ───────────────────────────────────────────────────────
@@ -572,5 +587,45 @@ export class UIController {
         if (!this.isPriming(key)) this.onPrimeRequest?.(key);
       });
     });
+  }
+
+  // ── Étalonnage ────────────────────────────────────────────────────────────
+
+  /**
+   * Lie les boutons d'étalonnage (data-etakey).
+   * Comportement : un clic envoie 1 ; l'ESP12F renvoie 0 quand c'est fait.
+   * Pas de minuterie — la couleur reflète la valeur MQTT courante.
+   */
+  _bindEtalonnageButtons() {
+    document.querySelectorAll('[data-etakey]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.onEtalonnage?.(btn.dataset.etakey);
+      });
+    });
+  }
+
+  /**
+   * Met à jour la valeur affichée dans le libellé d'un bouton d'étalonnage.
+   * @param {string} spanId    ID du <span class="etalon-val"> dans le bouton
+   * @param {number} val       Valeur numérique reçue depuis MQTT
+   * @param {number} decimals  Nombre de décimales
+   * @param {string} unit      Unité (peut être vide)
+   */
+  updateEtalonnageLabel(spanId, val, decimals, unit) {
+    const el = document.getElementById(spanId);
+    if (!el) return;
+    el.textContent = val !== null
+      ? val.toFixed(decimals) + (unit ? '\u00a0' + unit : '')
+      : '--';
+  }
+
+  /**
+   * Active ou désactive l'apparence "en cours" d'un bouton d'étalonnage.
+   * @param {string}  btnId    ID du bouton
+   * @param {boolean} isActive true = étalonnage en cours (value=1)
+   */
+  setEtalonnageState(btnId, isActive) {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.toggle('etalon-active', isActive);
   }
 }

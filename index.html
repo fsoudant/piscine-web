@@ -12,9 +12,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
 <link rel="stylesheet" href="style.css">
 <style>
-  .preco-card { border-left: 3px solid #f59e0b; }
+  .preco-card  { border-left: 3px solid #f59e0b; }
   .preco-message { font-size: 0.92rem; color: #f59e0b; padding: 4px 0 2px; line-height: 1.4; }
-  .param-hint { font-size: 0.78rem; color: #64748b; padding: 2px 0 6px; font-style: italic; }
+  .param-hint  { font-size: 0.78rem; color: #64748b; padding: 2px 0 6px; font-style: italic; }
+  .etalon-btn  { width: 100%; text-align: left; margin-top: 0; }
+  .etalon-btn.etalon-active { background: #f59e0b; color: #0a1628; }
 </style>
 </head>
 <body>
@@ -30,12 +32,67 @@
 <div id="content">
   <div class="tab-panel active" id="tab-main">
 
+    <!-- ── 1. MODE ────────────────────────────────────────────────────────── -->
     <div class="section-title">Mode de fonctionnement</div>
     <div class="card">
-      <!-- Généré dynamiquement depuis pool-model.js -->
       <div class="mode-picker" id="modePicker"></div>
     </div>
 
+    <!-- ── 2. TEMPÉRATURES ───────────────────────────────────────────────── -->
+    <div class="section-title">Températures</div>
+    <div class="card">
+      <div class="card-row">
+        <div class="card-label">Température actuelle</div>
+        <div><span class="card-value" id="val-temperature">--</span><span class="card-unit" id="unit-temperature"></span>
+             <span class="badge" id="badge-temperature"></span></div>
+      </div>
+      <div class="slider-track">
+        <div class="slider-norm" id="norm-temperature"></div>
+        <div class="slider-fill" id="fill-temperature"></div>
+        <div class="slider-thumb" id="thumb-temperature"></div>
+      </div>
+      <div class="slider-labels"><span id="min-label-temperature"></span><span id="norm-label-temperature"></span><span id="max-label-temperature"></span></div>
+    </div>
+
+    <div class="temp-group">
+      <div class="temp-mini-card"><div class="temp-mini-label">🌡 Moyenne</div><div class="temp-mini-val"><span id="val-tempmoy">--</span> <span id="unit-tempmoy"></span></div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">❄️ Minimum</div><div class="temp-mini-val"><span id="val-tempmin">--</span> <span id="unit-tempmin"></span></div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">☀️ Maximum</div><div class="temp-mini-val"><span id="val-tempmax">--</span> <span id="unit-tempmax"></span></div></div>
+      <div class="temp-mini-card"><div class="temp-mini-label">🔧 Fréquence</div><div class="temp-mini-val"><span id="val-freq">--</span> <span id="unit-freq"></span></div></div>
+    </div>
+
+    <!-- ── 3. PLAGE DE FILTRATION ─────────────────────────────────────────── -->
+    <div class="section-title">Plage de filtration</div>
+    <div class="card">
+      <div class="card-row" style="margin-bottom:12px">
+        <div class="card-label">Programmation</div>
+        <span class="badge warn" id="filtModeBadge">⚙️ Auto</span>
+      </div>
+      <div class="filt-time-display">
+        <span class="filt-time-label">Début</span>
+        <span class="filt-time-value" id="filt-start">08:00</span>
+        <span class="filt-time-separator">→</span>
+        <span class="filt-time-label">Fin</span>
+        <span class="filt-time-value" id="filt-end">20:00</span>
+        <span class="filt-duration" id="filt-duration">12h 00min</span>
+      </div>
+      <div class="dual-slider-container">
+        <div class="dual-slider-track" id="filtSliderTrack">
+          <div class="dual-slider-range" id="filtRange"></div>
+          <div class="dual-slider-thumb start" id="filtThumbStart" data-type="start">
+            <div class="dual-slider-tooltip" id="filtTooltipStart">08:00</div>
+          </div>
+          <div class="dual-slider-thumb end" id="filtThumbEnd" data-type="end">
+            <div class="dual-slider-tooltip" id="filtTooltipEnd">20:00</div>
+          </div>
+        </div>
+        <div class="dual-slider-hours">
+          <span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. PHYSICO-CHIMIE ──────────────────────────────────────────────── -->
     <div class="section-title">Physico-chimie</div>
 
     <div class="card">
@@ -94,6 +151,20 @@
 
     <div class="card">
       <div class="card-row">
+        <div class="card-label">Redox</div>
+        <div><span class="card-value" id="val-redox">--</span><span class="card-unit" id="unit-redox"></span>
+             <span class="badge" id="badge-redox"></span></div>
+      </div>
+      <div class="slider-track">
+        <div class="slider-norm" id="norm-redox"></div>
+        <div class="slider-fill" id="fill-redox"></div>
+        <div class="slider-thumb" id="thumb-redox"></div>
+      </div>
+      <div class="slider-labels"><span id="min-label-redox"></span><span id="norm-label-redox"></span><span id="max-label-redox"></span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-row">
         <div class="card-label">ISL — Indice de Langelier</div>
         <span class="badge" id="badge-isl"></span>
       </div>
@@ -107,49 +178,7 @@
       <div class="slider-labels"><span>−5</span><span>0</span><span>+5</span></div>
     </div>
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">Redox</div>
-        <div><span class="card-value" id="val-redox">--</span><span class="card-unit" id="unit-redox"></span>
-             <span class="badge" id="badge-redox"></span></div>
-      </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-redox"></div>
-        <div class="slider-fill" id="fill-redox"></div>
-        <div class="slider-thumb" id="thumb-redox"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-redox"></span><span id="norm-label-redox"></span><span id="max-label-redox"></span></div>
-    </div>
-
-    <div class="card preco-card" id="card-preco" style="display:none">
-      <div class="card-row">
-        <div class="card-label">💡 Préconisation</div>
-      </div>
-      <div class="preco-message" id="val-preco"></div>
-    </div>
-
-    <div class="section-title">Températures</div>
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">Température actuelle</div>
-        <div><span class="card-value" id="val-temperature">--</span><span class="card-unit" id="unit-temperature"></span>
-             <span class="badge" id="badge-temperature"></span></div>
-      </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-temperature"></div>
-        <div class="slider-fill" id="fill-temperature"></div>
-        <div class="slider-thumb" id="thumb-temperature"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-temperature"></span><span id="norm-label-temperature"></span><span id="max-label-temperature"></span></div>
-    </div>
-
-    <div class="temp-group">
-      <div class="temp-mini-card"><div class="temp-mini-label">🌡 Moyenne</div><div class="temp-mini-val"><span id="val-tempmoy">--</span> <span id="unit-tempmoy"></span></div></div>
-      <div class="temp-mini-card"><div class="temp-mini-label">❄️ Minimum</div><div class="temp-mini-val"><span id="val-tempmin">--</span> <span id="unit-tempmin"></span></div></div>
-      <div class="temp-mini-card"><div class="temp-mini-label">☀️ Maximum</div><div class="temp-mini-val"><span id="val-tempmax">--</span> <span id="unit-tempmax"></span></div></div>
-      <div class="temp-mini-card"><div class="temp-mini-label">🔧 Fréquence</div><div class="temp-mini-val"><span id="val-freq">--</span> <span id="unit-freq"></span></div></div>
-    </div>
-
+    <!-- ── 5. DÉPRESSION POMPE ────────────────────────────────────────────── -->
     <div class="card">
       <div class="card-row">
         <div class="card-label">Dépression pompe</div>
@@ -164,40 +193,19 @@
       <div class="slider-labels"><span id="min-label-depression"></span><span id="norm-label-depression"></span><span id="max-label-depression"></span></div>
     </div>
 
-    <div class="section-title">Plage de filtration</div>
-    <div class="card">
-      <div class="card-row" style="margin-bottom:12px">
-        <div class="card-label">Programmation</div>
-        <span class="badge warn" id="filtModeBadge">⚙️ Auto</span>
+    <!-- ── 6. PRÉCONISATION ───────────────────────────────────────────────── -->
+    <div class="card preco-card" id="card-preco" style="display:none">
+      <div class="card-row">
+        <div class="card-label">💡 Préconisation</div>
       </div>
-      
-      <div class="filt-time-display">
-        <span class="filt-time-label">Début</span>
-        <span class="filt-time-value" id="filt-start">08:00</span>
-        <span class="filt-time-separator">→</span>
-        <span class="filt-time-label">Fin</span>
-        <span class="filt-time-value" id="filt-end">20:00</span>
-        <span class="filt-duration" id="filt-duration">12h 00min</span>
-      </div>
-      
-      <div class="dual-slider-container">
-        <div class="dual-slider-track" id="filtSliderTrack">
-          <div class="dual-slider-range" id="filtRange"></div>
-          <div class="dual-slider-thumb start" id="filtThumbStart" data-type="start">
-            <div class="dual-slider-tooltip" id="filtTooltipStart">08:00</div>
-          </div>
-          <div class="dual-slider-thumb end" id="filtThumbEnd" data-type="end">
-            <div class="dual-slider-tooltip" id="filtTooltipEnd">20:00</div>
-          </div>
-        </div>
-        <div class="dual-slider-hours">
-          <span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span>
-        </div>
-      </div>
+      <div class="preco-message" id="val-preco"></div>
     </div>
 
   </div>
 
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!--  ONGLET PARAMÈTRES                                                    -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
   <div class="tab-panel" id="tab-params">
 
     <div class="section-title">Hydraulique</div>
@@ -255,16 +263,19 @@
         <input type="range" class="edit-slider" id="p-etalonph1">
         <div class="slider-labels"><span id="min-label-p-etalonph1"></span><span id="max-label-p-etalonph1"></span></div>
       </div>
-      <div class="param-row" style="margin-bottom:0">
+      <div class="param-row">
         <div class="param-header"><span class="param-label">Étalon pH 2</span><span class="param-val" id="pv-etalonph2">--</span></div>
         <input type="range" class="edit-slider" id="p-etalonph2">
         <div class="slider-labels"><span id="min-label-p-etalonph2"></span><span id="max-label-p-etalonph2"></span></div>
       </div>
       <div class="param-row" style="margin-bottom:0; margin-top:12px">
-        <button class="prime-btn" id="btn-etalonnageph1" data-prime-key="etalonnageph1">🔬 Étalonner pH 1 (solution pH 4)</button>
-        <div class="prime-progress" id="prog-etalonnageph1"></div>
-        <button class="prime-btn" id="btn-etalonnageph2" data-prime-key="etalonnageph2" style="margin-top:8px">🔬 Étalonner pH 2 (solution pH 7)</button>
-        <div class="prime-progress" id="prog-etalonnageph2"></div>
+        <!-- data-etakey : identifiant Pool (camelCase) -->
+        <button class="prime-btn etalon-btn" id="btn-etalonnageph1" data-etakey="etalonnagePh1">
+          🔬 Étalonner pH 1 — <span class="etalon-val" id="lbl-etalonph1">--</span>
+        </button>
+        <button class="prime-btn etalon-btn" id="btn-etalonnageph2" data-etakey="etalonnagePh2" style="margin-top:8px">
+          🔬 Étalonner pH 2 — <span class="etalon-val" id="lbl-etalonph2">--</span>
+        </button>
       </div>
     </div>
 
@@ -275,7 +286,7 @@
           <span class="param-label">Étalon TDS 1</span>
           <span class="param-val">0 ppm</span>
         </div>
-        <div class="param-hint">Eau déminéralisée (référence fixe)</div>
+        <div class="param-hint">Eau déminéralisée — référence fixe</div>
       </div>
       <div class="param-row">
         <div class="param-header"><span class="param-label">Étalon TDS 2 (solution connue)</span><span class="param-val" id="pv-etalontds2">--</span></div>
@@ -283,18 +294,20 @@
         <div class="slider-labels"><span id="min-label-p-etalontds2"></span><span id="max-label-p-etalontds2"></span></div>
       </div>
       <div class="param-row" style="margin-bottom:0; margin-top:12px">
-        <button class="prime-btn" id="btn-etalonnageTds1" data-prime-key="etalonnageTds1">💧 Étalonner TDS 1 (eau déminéralisée)</button>
-        <div class="prime-progress" id="prog-etalonnageTds1"></div>
-        <button class="prime-btn" id="btn-etalonnageTds2" data-prime-key="etalonnageTds2" style="margin-top:8px">🔬 Étalonner TDS 2 (solution connue)</button>
-        <div class="prime-progress" id="prog-etalonnageTds2"></div>
+        <button class="prime-btn etalon-btn" id="btn-etalonnageTds1" data-etakey="etalonnageTds1">
+          💧 Étalonner TDS 1 — eau déminéralisée (0 ppm)
+        </button>
+        <button class="prime-btn etalon-btn" id="btn-etalonnageTds2" data-etakey="etalonnageTds2" style="margin-top:8px">
+          🔬 Étalonner TDS 2 — <span class="etalon-val" id="lbl-etalontds2">--</span>
+        </button>
       </div>
     </div>
 
     <div class="section-title">Amorçage pompes</div>
     <div class="card">
-      <button class="prime-btn" id="btn-amorceph">💧 Amorcer Pompe pH</button>
+      <button class="prime-btn" id="btn-amorceph" data-prime-key="amorceph">💧 Amorcer Pompe pH</button>
       <div class="prime-progress" id="prog-amorceph"></div>
-      <button class="prime-btn" id="btn-amorceredox" style="margin-top:8px">⚡ Amorcer Pompe Redox</button>
+      <button class="prime-btn" id="btn-amorceredox" data-prime-key="amorceredox" style="margin-top:8px">⚡ Amorcer Pompe Redox</button>
       <div class="prime-progress" id="prog-amorceredox"></div>
     </div>
 
@@ -322,7 +335,6 @@
   <div class="modal-box">
     <div class="modal-title">🏊 Connexion MQTT</div>
     <div class="modal-sub">Identifiez-vous pour accéder à votre piscine</div>
-
     <div class="modal-field">
       <label>Identifiant</label>
       <input type="text" id="mqttUser" value="" placeholder="votre@email.com">
@@ -331,15 +343,11 @@
       <label>Mot de passe</label>
       <input type="password" id="mqttPass" value="" placeholder="••••••••">
     </div>
-
     <button class="connect-btn" id="connectBtn">Se connecter</button>
     <div id="mqttError"></div>
   </div>
 </div>
 
-<!--script type="module" src="pool-model.js"></script>
-<script type="module" src="mqtt-service.js"></script>
-<script type="module" src="ui-controller.js"></script-->
 <script type="module" src="app.js"></script>
 
 </body>

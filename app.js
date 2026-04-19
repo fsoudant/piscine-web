@@ -50,11 +50,19 @@ ui.onModeChange = mode => {
   ui.updateMode(mode);
 };
 
+// Amorçage pompes — affiche le chronomètre de progression
 ui.onPrimeRequest = key => {
-  const poolKey = key === 'amorceph' ? 'amorcePH' : 'amorceRedox';
+  const keyMap = { 'amorceph': 'amorcePH', 'amorceredox': 'amorceRedox' };
+  const poolKey = keyMap[key];
+  if (!poolKey) return;
   controller.setValue(poolKey, 1);
   ui.showPriming(key);
-  // L'ESP12F repasse à 0 via MQTT — l'UI se mettra à jour via 'valueChange'
+  // L'ESP12F remet à 0 via MQTT
+};
+
+// Étalonnage pH / TDS — simple impulsion 0→1 ; l'ESP renvoie 0 quand c'est fait
+ui.onEtalonnage = poolKey => {
+  controller.setValue(poolKey, 1);
 };
 
 // ── Dispatch valeurs vers UI ───────────────────────────────────────────────
@@ -89,7 +97,7 @@ function dispatchToUI(key, val) {
 
   const paramKeys = ['volume','debitpompe','pompeph','pomperedox',
                      'freqbasse','freqmoy','freqhaute','minfreqhaut',
-                     'etalonph1','etalonph2'];
+                     'etalonph1','etalonph2','etalontds2'];
   if (paramKeys.includes(key.toLowerCase())) {
     const meta = TOPICS[key];
     ui.syncEditableSlider('p-' + key.toLowerCase(), 'pv-' + key.toLowerCase(),
@@ -98,6 +106,32 @@ function dispatchToUI(key, val) {
 
   if (key === 'mode') {
     ui.updateMode(val);
+  }
+
+  // Mise à jour du libellé des boutons d'étalonnage (valeur courante de l'étalon)
+  const etalonLabelMap = {
+    etalonPh1:  { span: 'lbl-etalonph1',  decimals: 2, unit: '' },
+    etalonPh2:  { span: 'lbl-etalonph2',  decimals: 2, unit: '' },
+    etalonTds2: { span: 'lbl-etalontds2', decimals: 0, unit: 'ppm' },
+  };
+  if (etalonLabelMap[key]) {
+    const { span, decimals, unit } = etalonLabelMap[key];
+    ui.updateEtalonnageLabel(span, val, decimals, unit);
+  }
+
+  // État actif/inactif des boutons d'étalonnage (1 = en cours, 0 = terminé)
+  const etalonStateMap = {
+    etalonnagePh1:  'btn-etalonnageph1',
+    etalonnagePh2:  'btn-etalonnageph2',
+    etalonnageTds1: 'btn-etalonnageTds1',
+    etalonnageTds2: 'btn-etalonnageTds2',
+  };
+  if (etalonStateMap[key]) {
+    ui.setEtalonnageState(etalonStateMap[key], Number(val) === 1);
+  }
+
+  if (key === 'preco') {
+    ui.updatePreco(val);
   }
 
   if (key === 'isl') {
@@ -164,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { key: 'minFreqHaut', id: 'p-minfreqhaut' },
     { key: 'etalonPh1',   id: 'p-etalonph1'   },
     { key: 'etalonPh2',   id: 'p-etalonph2'   },
+    { key: 'etalonTds2',  id: 'p-etalontds2'  },
   ].forEach(({ key, id }) => {
     const meta = TOPICS[key];
     ui.setSliderRange(id, meta.min, meta.max, undefined, meta.step);
