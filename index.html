@@ -11,6 +11,11 @@
 <title>Piscine</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
 <link rel="stylesheet" href="style.css">
+<style>
+  .preco-card { border-left: 3px solid #f59e0b; }
+  .preco-message { font-size: 0.92rem; color: #f59e0b; padding: 4px 0 2px; line-height: 1.4; }
+  .param-hint { font-size: 0.78rem; color: #64748b; padding: 2px 0 6px; font-style: italic; }
+</style>
 </head>
 <body>
 
@@ -114,6 +119,13 @@
         <div class="slider-thumb" id="thumb-redox"></div>
       </div>
       <div class="slider-labels"><span id="min-label-redox"></span><span id="norm-label-redox"></span><span id="max-label-redox"></span></div>
+    </div>
+
+    <div class="card preco-card" id="card-preco" style="display:none">
+      <div class="card-row">
+        <div class="card-label">💡 Préconisation</div>
+      </div>
+      <div class="preco-message" id="val-preco"></div>
     </div>
 
     <div class="section-title">Températures</div>
@@ -247,6 +259,34 @@
         <div class="param-header"><span class="param-label">Étalon pH 2</span><span class="param-val" id="pv-etalonph2">--</span></div>
         <input type="range" class="edit-slider" id="p-etalonph2">
         <div class="slider-labels"><span id="min-label-p-etalonph2"></span><span id="max-label-p-etalonph2"></span></div>
+      </div>
+      <div class="param-row" style="margin-bottom:0; margin-top:12px">
+        <button class="prime-btn" id="btn-etalonnageph1" data-prime-key="etalonnageph1">🔬 Étalonner pH 1 (solution pH 4)</button>
+        <div class="prime-progress" id="prog-etalonnageph1"></div>
+        <button class="prime-btn" id="btn-etalonnageph2" data-prime-key="etalonnageph2" style="margin-top:8px">🔬 Étalonner pH 2 (solution pH 7)</button>
+        <div class="prime-progress" id="prog-etalonnageph2"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Étalonnage TDS</div>
+    <div class="card">
+      <div class="param-row">
+        <div class="param-header">
+          <span class="param-label">Étalon TDS 1</span>
+          <span class="param-val">0 ppm</span>
+        </div>
+        <div class="param-hint">Eau déminéralisée (référence fixe)</div>
+      </div>
+      <div class="param-row">
+        <div class="param-header"><span class="param-label">Étalon TDS 2 (solution connue)</span><span class="param-val" id="pv-etalontds2">--</span></div>
+        <input type="range" class="edit-slider" id="p-etalontds2">
+        <div class="slider-labels"><span id="min-label-p-etalontds2"></span><span id="max-label-p-etalontds2"></span></div>
+      </div>
+      <div class="param-row" style="margin-bottom:0; margin-top:12px">
+        <button class="prime-btn" id="btn-etalonnageTds1" data-prime-key="etalonnageTds1">💧 Étalonner TDS 1 (eau déminéralisée)</button>
+        <div class="prime-progress" id="prog-etalonnageTds1"></div>
+        <button class="prime-btn" id="btn-etalonnageTds2" data-prime-key="etalonnageTds2" style="margin-top:8px">🔬 Étalonner TDS 2 (solution connue)</button>
+        <div class="prime-progress" id="prog-etalonnageTds2"></div>
       </div>
     </div>
 

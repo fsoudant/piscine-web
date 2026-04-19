@@ -555,23 +555,14 @@ export class UIController {
     const slider = document.getElementById(sliderId);
     if (!slider) return;
 
-    const refresh = (rawVal) => {
-      const val = parseFloat(rawVal);
-      if (isNaN(val)) return;
+    slider.addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
       const displayEl = document.getElementById(displayId);
       if (displayEl) {
         displayEl.textContent = val.toFixed(decimals) + (unit ? '\u00a0' + unit : '');
       }
-    };
-
-    // Initialisation immédiate : afficher la valeur courante du glisseur
-    // (évite le "--" permanent si aucune valeur MQTT retenue n'arrive pour ce topic)
-    refresh(slider.value);
-
-    // 'input' : mise à jour pendant le glissement
-    // 'change' : fallback pour certains navigateurs mobiles (iOS)
-    slider.addEventListener('input',  e => { refresh(e.target.value); this.onPublish?.(topic, e.target.value); });
-    slider.addEventListener('change', e => { refresh(e.target.value); this.onPublish?.(topic, e.target.value); });
+      this.onPublish?.(topic, e.target.value);
+    });
   }
 
   _bindPrimeButtons() {

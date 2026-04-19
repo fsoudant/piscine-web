@@ -17,36 +17,42 @@ export const MODES = [
 ];
 
 export const TOPICS = {
-  mode:        { topic: `${BASE}/Piscine/Mode`,          unit: '',       min: 0,   max: 2,    decimals: 0, step: 1     },
-  ph:          { topic: `${BASE}/Piscine/PH`,            unit: '',       min: 6,   max: 9,    decimals: 1, step: 0.1,  normLow: 7.0,  normHigh: 7.4  },
-  redox:       { topic: `${BASE}/Piscine/Redox`,         unit: 'mV',     min: 0,   max: 800,  decimals: 0, step: 1,    normLow: 650,  normHigh: 750  },
-  tac:         { topic: `${BASE}/Piscine/TAC`,           unit: 'ppm',    min: 0,   max: 200,  decimals: 0, step: 1,    normLow: 80,   normHigh: 120  },
-  tds:         { topic: `${BASE}/Piscine/TDS`,           unit: 'ppm',    min: 0,   max: 2000, decimals: 0, step: 1,    normLow: 250,  normHigh: 2000 },
-  th:          { topic: `${BASE}/Piscine/TH`,            unit: 'ppm',    min: 0,   max: 300,  decimals: 0, step: 1,    normLow: 100,  normHigh: 250  },
-  temperature: { topic: `${BASE}/Piscine/Temperature`,   unit: '°C',     min: -10, max: 45,   decimals: 1, step: 0.1   },
-  tempMoy:     { topic: `${BASE}/Piscine/TempMoy`,       unit: '°C',     min: -10, max: 45,   decimals: 1, step: 0.1   },
-  tempMin:     { topic: `${BASE}/Piscine/TempMin`,       unit: '°C',     min: -10, max: 45,   decimals: 1, step: 0.1   },
-  tempMax:     { topic: `${BASE}/Piscine/TempMax`,       unit: '°C',     min: -10, max: 45,   decimals: 1, step: 0.1   },
-  frequence:   { topic: `${BASE}/Piscine/Frequence`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
-  heureDeb:    { topic: `${BASE}/Piscine/HeureDeb`,      unit: 'h',      min: 0,   max: 23,   decimals: 0, step: 1     },
-  minDeb:      { topic: `${BASE}/Piscine/MinDeb`,        unit: 'min',    min: 0,   max: 59,   decimals: 0, step: 1     },
-  heureFin:    { topic: `${BASE}/Piscine/HeureFin`,      unit: 'h',      min: 0,   max: 23,   decimals: 0, step: 1     },
-  minFin:      { topic: `${BASE}/Piscine/MinFin`,        unit: 'min',    min: 0,   max: 59,   decimals: 0, step: 1     },
-  depression:  { topic: `${BASE}/Piscine/Depression`,    unit: 'bar',    min: -5,  max: 0,    decimals: 0, step: 1,    normLow: -3,   normHigh: -1   },
-  volume:      { topic: `${BASE}/Piscine/Volume`,        unit: 'm³',     min: 0,   max: 200,  decimals: 0, step: 1     },
-  debitPompe:  { topic: `${BASE}/Piscine/DebitPompe`,    unit: 'm³/h',   min: 0,   max: 100,  decimals: 1, step: 0.1   },
-  pompePH:     { topic: `${BASE}/Piscine/PompePH`,       unit: 'dl/m',   min: 0,   max: 200,  decimals: 0, step: 1     },
-  pompeRedox:  { topic: `${BASE}/Piscine/PompeRedox`,    unit: 'dl/m',   min: 0,   max: 200,  decimals: 0, step: 1     },
-  freqBasse:   { topic: `${BASE}/Piscine/FreqBasse`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
-  freqMoy:     { topic: `${BASE}/Piscine/FreqMoy`,       unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
-  freqHaute:   { topic: `${BASE}/Piscine/FreqHaute`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
-  minFreqHaut: { topic: `${BASE}/Piscine/MinFreqHaut`,   unit: 'min',    min: 0,   max: 60,   decimals: 0, step: 1     },
-  etalonPh1:   { topic: `${BASE}/Piscine/EtalonPh1`,     unit: '',       min: 0,   max: 14,   decimals: 2, step: 0.01  },
-  etalonPh2:   { topic: `${BASE}/Piscine/EtalonPh2`,     unit: '',       min: 0,   max: 14,   decimals: 2, step: 0.01  },
-  amorcePH:    { topic: `${BASE}/Piscine/AmorcePH`,      unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
-  amorceRedox: { topic: `${BASE}/Piscine/AmorceRedox`,   unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
-  isl:         { topic: '',                              unit: '',       min: -5,  max: 5,    decimals: 2, step: 0.01  }, // Calculé, pas de topic MQTT direct
-};
+  mode:           { topic: `${BASE}/Piscine/Mode`,          unit: '',       min: 0,   max: 2,    decimals: 0, step: 1     },
+  ph:             { topic: `${BASE}/Piscine/PH`,            unit: '',       min: 6,   max: 9,    decimals: 1, step: 0.1,  normLow: 7.0,  normHigh: 7.4  },
+  redox:          { topic: `${BASE}/Piscine/Redox`,         unit: 'mV',     min: 0,   max: 800,  decimals: 0, step: 1,    normLow: 650,  normHigh: 750  },
+  tac:            { topic: `${BASE}/Piscine/TAC`,           unit: 'ppm',    min: 0,   max: 200,  decimals: 0, step: 1,    normLow: 80,   normHigh: 120  },
+  tds:            { topic: `${BASE}/Piscine/TDS`,           unit: 'ppm',    min: 0,   max: 2000, decimals: 0, step: 1,    normLow: 250,  normHigh: 2000 },
+  th:             { topic: `${BASE}/Piscine/TH`,            unit: 'ppm',    min: 0,   max: 300,  decimals: 0, step: 1,    normLow: 100,  normHigh: 250  },
+  temperature:    { topic: `${BASE}/Piscine/Temperature`,   unit: '°C',     min: -10, max: 45,   decimals: 1, step: 0.1   },
+  tempMoy:        { topic: `${BASE}/Piscine/TempMoy`,       unit: '°C',     min: -10, max: 45,   decimals: 1, step: 0.1   },
+  tempMin:        { topic: `${BASE}/Piscine/TempMin`,       unit: '°C',     min: -10, max: 45,   decimals: 1, step: 0.1   },
+  tempMax:        { topic: `${BASE}/Piscine/TempMax`,       unit: '°C',     min: -10, max: 45,   decimals: 1, step: 0.1   },
+  frequence:      { topic: `${BASE}/Piscine/Frequence`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
+  heureDeb:       { topic: `${BASE}/Piscine/HeureDeb`,      unit: 'h',      min: 0,   max: 23,   decimals: 0, step: 1     },
+  minDeb:         { topic: `${BASE}/Piscine/MinDeb`,        unit: 'min',    min: 0,   max: 59,   decimals: 0, step: 1     },
+  heureFin:       { topic: `${BASE}/Piscine/HeureFin`,      unit: 'h',      min: 0,   max: 23,   decimals: 0, step: 1     },
+  minFin:         { topic: `${BASE}/Piscine/MinFin`,        unit: 'min',    min: 0,   max: 59,   decimals: 0, step: 1     },
+  depression:     { topic: `${BASE}/Piscine/Depression`,    unit: 'bar',    min: -5,  max: 0,    decimals: 0, step: 1,    normLow: -3,   normHigh: -1   },
+  volume:         { topic: `${BASE}/Piscine/Volume`,        unit: 'm³',     min: 0,   max: 200,  decimals: 0, step: 1     },
+  debitPompe:     { topic: `${BASE}/Piscine/DebitPompe`,    unit: 'm³/h',   min: 0,   max: 100,  decimals: 1, step: 0.1   },
+  pompePH:        { topic: `${BASE}/Piscine/PompePH`,       unit: 'dl/m',   min: 0,   max: 200,  decimals: 0, step: 1     },
+  pompeRedox:     { topic: `${BASE}/Piscine/PompeRedox`,    unit: 'dl/m',   min: 0,   max: 200,  decimals: 0, step: 1     },
+  freqBasse:      { topic: `${BASE}/Piscine/FreqBasse`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
+  freqMoy:        { topic: `${BASE}/Piscine/FreqMoy`,       unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
+  freqHaute:      { topic: `${BASE}/Piscine/FreqHaute`,     unit: 'Hz',     min: 0,   max: 50,   decimals: 0, step: 5     },
+  minFreqHaut:    { topic: `${BASE}/Piscine/MinFreqHaut`,   unit: 'min',    min: 0,   max: 60,   decimals: 0, step: 1     },
+  etalonPh1:      { topic: `${BASE}/Piscine/EtalonPh1`,     unit: '',       min: 0,   max: 14,   decimals: 2, step: 0.01  },
+  etalonnagePh1:  { topic: `${BASE}/Piscine/EtalonnagePh1`, unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
+  etalonPh2:      { topic: `${BASE}/Piscine/EtalonPh2`,     unit: '',       min: 0,   max: 14,   decimals: 2, step: 0.01  },
+  etalonnagePh2:  { topic: `${BASE}/Piscine/EtalonnagePh2`, unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
+  etalonTds2:     { topic: `${BASE}/Piscine/EtalonTds2`,    unit: 'ppm',    min: 0,   max: 2000, decimals: 0, step: 1     },
+  etalonnageTds1: { topic: `${BASE}/Piscine/EtalonnageTds1`,unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
+  etalonnageTds2: { topic: `${BASE}/Piscine/EtalonnageTds2`,unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
+  amorcePH:       { topic: `${BASE}/Piscine/AmorcePH`,      unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
+  amorceRedox:    { topic: `${BASE}/Piscine/AmorceRedox`,   unit: '',       min: 0,   max: 1,    decimals: 0, step: 1     },
+  isl:            { topic: '',                              unit: '',       min: 0,   max: 0,    decimals: 2, step: 0.01  }, // Calculé, pas de topic MQTT direct 
+  preco:          { topic: '',                              unit: '',       min: 0,   max: 0,    decimals: 0, step: 0     }, // Calculé, pas de topic MQTT direct
+ };
 
 export const TOPIC_TO_KEY = Object.fromEntries(
   Object.entries(TOPICS)
@@ -59,8 +65,8 @@ export class Pool {
   #tempMoy; #tempMin; #tempMax; #frequence; #heureDeb; #minDeb;
   #heureFin; #minFin; #depression; #volume; #debitPompe;
   #pompePH; #pompeRedox; #freqBasse; #freqMoy; #freqHaute;
-  #minFreqHaut; #etalonPh1; #etalonPh2; #amorcePH; #amorceRedox;
-  #isL;
+  #minFreqHaut; #etalonPh1; #etalonTds2; #etalonPh2; #etalonnagePh1; #etalonnagePh2; #etalonnageTds1; #etalonnageTds2; #amorcePH; #amorceRedox;
+  #isl; #preco;
   #mqttService = null;
   #receivingFromMqtt = false; // Guard : empêche le re-publish des valeurs reçues de MQTT
 
@@ -74,11 +80,13 @@ export class Pool {
     this.#pompePH = null; this.#pompeRedox = null; this.#freqBasse = null;
     this.#freqMoy = null; this.#freqHaute = null; this.#minFreqHaut = null;
     this.#etalonPh1 = null; this.#etalonPh2 = null;
+    this.#etalonTds2 = null;
     this.#amorcePH = null; this.#amorceRedox = null;
-    this.#mqttService = mqttService;
-    
-    // Calcul initial de l'ISL
+    this.#etalonnagePh1 = null; this.#etalonnagePh2 = null; this.#etalonnageTds1 = null; this.#etalonnageTds2 = null;
+    this.#mqttService = mqttService;  
+    // Calcul initial de l'ISL et de la Preconisation
     this.#computeISL();
+    this.#computePreco();
   }
 
   get mode() { return this.#mode; }
@@ -107,13 +115,20 @@ export class Pool {
   get minFreqHaut() { return this.#minFreqHaut; }
   get etalonPh1() { return this.#etalonPh1; }
   get etalonPh2() { return this.#etalonPh2; }
+  get etalonTds2() { return this.#etalonTds2; }
+  get etalonnagePh1() { return this.#etalonnagePh1; }
+  get etalonnagePh2() { return this.#etalonnagePh2; }
+  get etalonnageTds1() { return this.#etalonnageTds1; }
+  get etalonnageTds2() { return this.#etalonnageTds2; }
   get amorcePH() { return this.#amorcePH; }
   get amorceRedox() { return this.#amorceRedox; }
-  get isl() { return this.#isL; }
+  get isl() { return this.#isl; }
+  get preco() { return this.#preco; }
 
   #validate(key, raw) {
     const meta = TOPICS[key];
     if (!meta) return null;
+    if (meta.step === 0) return raw;
     const val = parseFloat(raw);
     return isNaN(val) ? null : val;
   }
@@ -131,11 +146,11 @@ export class Pool {
   #computeISL() {
     const { ph, tds, th, tac, temperature: t } = this;
     if ([ph, tds, th, tac, t].some(v => v === null)) {
-      this.#isL = null;
+      this.#isl = null;
       return;
     }
     if (tds <= 1 || th <= 0 || tac <= 0) {
-      this.#isL = null;
+      this.#isl = null;
       return;
     }
     const A = Math.log10(tds - 1) / 10;
@@ -144,9 +159,134 @@ export class Pool {
     const D = Math.log10(tac);
     const isl = ph - ((9.3 + A + B) - (C + D));
     let status = (isl >= -0.3 && isl <= 0.3) ? 'ok' : (Math.abs(isl) > 1 ? 'danger' : 'warn');
-    this.#isL = { value: isl, status };
+    this.#isl = { value: isl, status };
     // Pas de publication MQTT ici, l'ISL est une valeur calculée déduite des autres paramètres
   }
+  
+ #computePreco() {
+  this.#preco = "";
+  const V = this.#volume; // m³, peut être null
+
+  // ── 1. Désinfection (Redox) — priorité absolue ───────────────────────────
+  // Règle : ~30 mV par mg/L (ppm) de chlore libre ; 1 ppm = 1 g/m³
+  // g_chlore = (ΔmV / 30) × V
+  if (this.#redox !== null) {
+    const meta = TOPICS["redox"];
+    if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
+      const cible = (meta.normLow + meta.normHigh) / 2;
+      if (this.#redox <= meta.normLow) {
+        const g = V !== null ? ((( cible - this.#redox) / 30) * V).toFixed(0) : '?';
+        this.#preco = `La piscine n'est plus désinfectante : ajouter ${g} g de chlore pur`;
+        return;
+      }
+      if (this.#redox >= meta.normHigh) {
+        this.#preco = "La piscine est trop chlorée : ajouter de l'eau fraîche";
+        return;
+      }
+    }
+  }
+
+  // ── 2. Filtration (Dépression) ───────────────────────────────────────────
+  // normLow est négatif (ex : −3 bar) : si depression < normLow → filtre colmaté
+  if (this.#depression !== null) {
+    const meta = TOPICS["depression"];
+    if (meta?.normLow !== undefined && this.#depression < meta.normLow) {
+      this.#preco = "Nettoyage des filtres requis";
+      return;
+    }
+  }
+
+  // ── 3. TAC ───────────────────────────────────────────────────────────────
+  // TAC bas → bicarbonate de soude (NaHCO₃) :
+  //   1 mol NaHCO₃ (84 g) ≡ 50 g CaCO₃ → 84/50 = 1,68 g/m³ par ppm de TAC
+  //   g_NaHCO3 = (cible − TAC) × 1,68 × V
+  //
+  // TAC haut → acide chlorhydrique 33% (densité 1,19) :
+  //   1 mol HCl (36,5 g) neutralise 50 g CaCO₃ → 36,5 / 50 = 0,73 g/m³/ppm
+  //   à 33% : 0,73 / (0,33 × 1,19) ≈ 1,86 mL/m³/ppm → arrondi à 1,9 mL
+  //   mL_HCl = (TAC − cible) × 1,9 × V
+  if (this.#tac !== null) {
+    const meta = TOPICS["tac"];
+    if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
+      const cible = (meta.normLow + meta.normHigh) / 2;
+      if (this.#tac < meta.normLow) {
+        const g = V !== null ? ((cible - this.#tac) * 1.68 * V).toFixed(0) : '?';
+        this.#preco = `TAC trop bas : ajouter ${g} g de bicarbonate de soude`;
+        return;
+      }
+      if (this.#tac > meta.normHigh) {
+        const mL = V !== null ? ((this.#tac - cible) * 1.9 * V).toFixed(0) : '?';
+        this.#preco = `TAC trop élevé : ajouter ${mL} mL d'acide chlorhydrique (33%)`;
+        return;
+      }
+    }
+  }
+
+  // ── 4. pH ────────────────────────────────────────────────────────────────
+  // pH+ (carbonate de sodium) : ~1,5 g/m³ par 0,1 unité pH
+  // pH− (acide chlorhydrique 33%) : ~1,5 mL/m³ par 0,1 unité pH
+  if (this.#ph !== null) {
+    const meta = TOPICS["ph"];
+    if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
+      const cible = (meta.normLow + meta.normHigh) / 2;
+      if (this.#ph < meta.normLow) {
+        const g = V !== null ? (((cible - this.#ph) / 0.1) * 1.5 * V).toFixed(0) : '?';
+        this.#preco = `pH trop bas : ajouter ${g} g de pH+`;
+        return;
+      }
+      if (this.#ph > meta.normHigh) {
+        const mL = V !== null ? (((this.#ph - cible) / 0.1) * 1.5 * V).toFixed(0) : '?';
+        this.#preco = `pH trop élevé : ajouter ${mL} mL de pH−`;
+        return;
+      }
+    }
+  }
+
+  // ── 5. TDS ───────────────────────────────────────────────────────────────
+  if (this.#tds !== null) {
+    const meta = TOPICS["tds"];
+    if (meta?.normHigh !== undefined && this.#tds > meta.normHigh) {
+      this.#preco = "TDS trop élevé : renouveler une partie de l'eau";
+      return;
+    }
+  }
+
+  // ── 6. TH ────────────────────────────────────────────────────────────────
+  if (this.#th !== null) {
+    const meta = TOPICS["th"];
+    if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
+      if (this.#th < meta.normLow) {
+        this.#preco = "TH trop bas : ajouter du chlorure de calcium";
+        return;
+      }
+      if (this.#th > meta.normHigh) {
+        this.#preco = "TH trop élevé : renouveler une partie de l'eau";
+        return;
+      }
+    }
+  }
+
+  // ── 7. ISL — tous les constituants sont dans les normes ──────────────────
+  // ΔISL ≈ ΔpH (car ISL = pH − pHs, et pHs varie peu sur de petits ajustements)
+  // Objectif : ramener ISL dans [−0,3 ; +0,3]
+  // → ΔpH_nécessaire = |ISL| − 0,3  (pour atteindre la borne la plus proche)
+  if (this.#isl !== null) {
+    const { value, status } = this.#isl;
+    if (status !== 'ok') {
+      const deltaISL = parseFloat(Math.abs(value) - 0.3).toFixed(1);
+      if (value < -1) {
+        this.#preco = `ISL ${value.toFixed(2)} : eau très agressive — risque de corrosion. Augmenter le pH de ${deltaISL} unité.`;
+      } else if (value < -0.3) {
+        this.#preco = `ISL ${value.toFixed(2)} : eau légèrement agressive. Augmenter le pH d'environ ${deltaISL} unité.`;
+      } else if (value > 1) {
+        this.#preco = `ISL ${value.toFixed(2)} : eau très entartrante — risque de dépôts calcaires. Diminuer le pH de ${deltaISL} unité.`;
+      } else if (value > 0.3) {
+        this.#preco = `ISL ${value.toFixed(2)} : eau légèrement entartrante. Diminuer le pH d'environ ${deltaISL} unité.`;
+      }
+    }
+  }
+  // Pas de publication MQTT ici — valeur calculée
+}
 
   set mode(v) { 
     const val = this.#validate('mode', v); 
@@ -163,6 +303,7 @@ export class Pool {
       this.#ph = val; 
       this.#publishIfChanged('ph', oldVal, val);
       this.#computeISL();
+      this.#computePreco();
     } 
   }
   set redox(v) { 
@@ -171,6 +312,7 @@ export class Pool {
       const oldVal = this.#redox;
       this.#redox = val; 
       this.#publishIfChanged('redox', oldVal, val);
+      this.#computePreco();
     } 
   }
   set tac(v) { 
@@ -180,6 +322,7 @@ export class Pool {
       this.#tac = val; 
       this.#publishIfChanged('tac', oldVal, val);
       this.#computeISL();
+      this.#computePreco();
     } 
   }
   set tds(v) { 
@@ -189,6 +332,7 @@ export class Pool {
       this.#tds = val; 
       this.#publishIfChanged('tds', oldVal, val);
       this.#computeISL();
+      this.#computePreco();
     } 
   }
   set th(v) { 
@@ -198,6 +342,7 @@ export class Pool {
       this.#th = val; 
       this.#publishIfChanged('th', oldVal, val);
       this.#computeISL();
+      this.#computePreco();
     } 
   }
   set temperature(v) { 
@@ -279,6 +424,7 @@ export class Pool {
       const oldVal = this.#depression;
       this.#depression = val; 
       this.#publishIfChanged('depression', oldVal, val);
+      this.#computePreco();
     } 
   }
   set volume(v) { 
@@ -361,6 +507,46 @@ export class Pool {
       this.#publishIfChanged('etalonPh2', oldVal, val);
     } 
   }
+  set etalonTds2(v) { 
+    const val = this.#validate('etalonTds2', v); 
+    if (val !== null) { 
+      const oldVal = this.#etalonTds2;
+      this.#etalonTds2 = val; 
+      this.#publishIfChanged('etalonTds2', oldVal, val);
+    } 
+  }
+  set etalonnagePh1(v) { 
+    const val = this.#validate('etalonnagePh1', v); 
+    if (val !== null) { 
+      const oldVal = this.#etalonnagePh1;
+      this.#etalonnagePh1 = val; 
+      this.#publishIfChanged('etalonnagePh1', oldVal, val);
+    } 
+  }
+  set etalonnagePh2(v) { 
+    const val = this.#validate('etalonnagePh2', v); 
+    if (val !== null) { 
+      const oldVal = this.#etalonnagePh2;
+      this.#etalonnagePh2 = val; 
+      this.#publishIfChanged('etalonnagePh2', oldVal, val);
+    } 
+  }
+  set etalonnageTds1(v) { 
+    const val = this.#validate('etalonnageTds1', v); 
+    if (val !== null) { 
+      const oldVal = this.#etalonnageTds1;
+      this.#etalonnageTds1 = val; 
+      this.#publishIfChanged('etalonnageTds1', oldVal, val);
+    } 
+  }
+  set etalonnageTds2(v) { 
+    const val = this.#validate('etalonnageTds2', v); 
+    if (val !== null) { 
+      const oldVal = this.#etalonnageTds2;
+      this.#etalonnageTds2 = val; 
+      this.#publishIfChanged('etalonnageTds2', oldVal, val);
+    } 
+  }
   set amorcePH(v) { 
     const val = this.#validate('amorcePH', v); 
     if (val !== null) { 
@@ -410,6 +596,9 @@ export class Pool {
       pompeRedox: this.#pompeRedox, freqBasse: this.#freqBasse, freqMoy: this.#freqMoy,
       freqHaute: this.#freqHaute, minFreqHaut: this.#minFreqHaut,
       etalonPh1: this.#etalonPh1, etalonPh2: this.#etalonPh2,
+      etalonTds2: this.#etalonTds2,
+      etalonnagePh1: this.#etalonnagePh1, etalonnagePh2: this.#etalonnagePh2,
+      etalonnageTds1: this.#etalonnageTds1, etalonnageTds2: this.#etalonnageTds2,
       amorcePH: this.#amorcePH, amorceRedox: this.#amorceRedox,
     };
   }
@@ -450,17 +639,9 @@ export class Pool {
           bounds: this.normBounds(key)
         };
       }
-    }
-    
-    // Ajout de l'ISL
-    const isl = this.isl;
-    if (isl) {
-      results.isl = isl;
-    }
-    
+    }   
     return results;
   }
-
   getValue(key) { return (key in this) ? this[key] : null; }
 }
 
