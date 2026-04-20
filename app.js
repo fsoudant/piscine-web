@@ -139,6 +139,35 @@ function dispatchToUI(key, val) {
   }
 }
 
+function updateTempWidget() {
+  const cur = controller.getValue('temperature');
+  const min = controller.getValue('tempMin');
+  const max = controller.getValue('tempMax');
+  const avg = controller.getValue('tempMoy');
+
+  const elMin = document.getElementById('tw-bound-min');
+  const elMax = document.getElementById('tw-bound-max');
+  if (elMin) elMin.textContent = (min !== null) ? min.toFixed(1) + ' °C' : '-- °C';
+  if (elMax) elMax.textContent = (max !== null) ? max.toFixed(1) + ' °C' : '-- °C';
+
+  if (min === null || max === null || max <= min) return;
+  const range = max - min;
+
+  if (cur !== null) {
+    const pct = Math.max(2, Math.min(98, ((cur - min) / range) * 100));
+    const el     = document.getElementById('tw-cur');
+    const bubble = document.getElementById('tw-cur-bubble');
+    if (el)     el.style.left       = pct + '%';
+    if (bubble) bubble.textContent  = cur.toFixed(1) + '°C';
+  }
+
+  if (avg !== null) {
+    const pct = Math.max(2, Math.min(98, ((avg - min) / range) * 100));
+    const el  = document.getElementById('tw-avg');
+    if (el) el.style.left = pct + '%';
+  }
+}
+
 function updateReadSlider(key, val) {
   const meta    = TOPICS[key];
   const pct     = controller.normalize(key, val) * 100;

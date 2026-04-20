@@ -216,10 +216,95 @@ input[type=range].edit-slider:disabled { opacity: .4; cursor: default; }
 .isl-label { text-align: center; font-size: 11px; color: var(--text3); }
 
 /* ── TEMPERATURES ── */
+/*
 .temp-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .temp-mini-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
 .temp-mini-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
 .temp-mini-val { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; color: var(--accent); }
+*/
+/* ── TEMPERATURE WIDGET ── */
+.temp-widget { padding: 16px 16px 12px; }
+
+.tw-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 20px;
+}
+.tw-sup-label {
+  font-size: 11px; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px;
+}
+.tw-main { display: flex; align-items: baseline; gap: 5px; }
+.tw-main-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 44px; font-weight: 500; color: var(--accent); line-height: 1;
+}
+.tw-main-unit { font-size: 20px; color: var(--text2); }
+
+/* Barre thermique */
+.tw-range { margin-bottom: 14px; }
+.tw-bar-outer {
+  position: relative; height: 8px;
+  background: linear-gradient(90deg, #38bdf8 0%, #34d399 38%, #fbbf24 68%, #f87171 100%);
+  border-radius: 4px;
+  margin: 24px 0 6px; /* 24px au-dessus pour la bulle */
+}
+
+/* Marqueurs (commun) */
+.tw-pin {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center;
+  transition: left 0.5s cubic-bezier(.4,0,.2,1);
+}
+.tw-pin-cur { z-index: 3; }
+.tw-pin-avg { z-index: 2; }
+.tw-pin-dot { border-radius: 50%; }
+
+/* Marqueur actuelle */
+.tw-pin-dot-cur {
+  width: 16px; height: 16px;
+  background: white; border: 2.5px solid var(--accent);
+  box-shadow: 0 0 12px rgba(0,212,255,.7), 0 2px 6px rgba(0,0,0,.4);
+}
+.tw-pin-bubble {
+  position: absolute; bottom: 22px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+  color: var(--accent); background: var(--card);
+  border: 1px solid rgba(0,212,255,.4); border-radius: 4px;
+  padding: 2px 6px; white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+
+/* Marqueur moyenne */
+.tw-pin-dot-avg {
+  width: 10px; height: 10px;
+  background: rgba(255,255,255,.3); border: 2px solid rgba(255,255,255,.6);
+}
+
+/* Bornes min/max */
+.tw-bounds {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--text3); padding: 0 2px;
+}
+
+/* Stats */
+.tw-stats {
+  display: flex; align-items: center;
+  background: rgba(255,255,255,.03); border-radius: 12px; padding: 12px 0;
+}
+.tw-stat {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+}
+.tw-ico { font-size: 16px; }
+.tw-stat-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px; font-weight: 500; color: var(--text);
+}
+.tw-stat-lbl {
+  font-size: 10px; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.tw-sep { width: 1px; height: 44px; background: var(--border); flex-shrink: 0; }
 
 /* ── FILTRATION TIME SLIDER ── */
 .filt-time-display {

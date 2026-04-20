@@ -38,7 +38,9 @@
       <div class="mode-picker" id="modePicker"></div>
     </div>
 
+	
     <!-- ── 2. TEMPÉRATURES ───────────────────────────────────────────────── -->
+    <!--
     <div class="section-title">Températures</div>
     <div class="card">
       <div class="card-row">
@@ -60,6 +62,63 @@
       <div class="temp-mini-card"><div class="temp-mini-label">☀️ Maximum</div><div class="temp-mini-val"><span id="val-tempmax">--</span> <span id="unit-tempmax"></span></div></div>
       <div class="temp-mini-card"><div class="temp-mini-label">🔧 Fréquence</div><div class="temp-mini-val"><span id="val-freq">--</span> <span id="unit-freq"></span></div></div>
     </div>
+    -->
+    <!-- ── 2. TEMPÉRATURES ───────────────────────────────────────────────── -->
+<div class="section-title">Températures</div>
+<div class="card temp-widget">
+
+  <!-- En-tête : temp actuelle + badge -->
+  <div class="tw-header">
+    <div>
+      <div class="tw-sup-label">Température actuelle</div>
+      <div class="tw-main">
+        <span class="tw-main-val" id="val-temperature">--</span>
+        <span class="tw-main-unit">°C</span>
+      </div>
+    </div>
+    <span class="badge" id="badge-temperature"></span>
+  </div>
+
+  <!-- Barre thermique min → max avec marqueurs -->
+  <div class="tw-range">
+    <div class="tw-bar-outer">
+      <!-- Marqueur Moyenne (discret) -->
+      <div class="tw-pin tw-pin-avg" id="tw-avg" style="left:50%">
+        <div class="tw-pin-dot tw-pin-dot-avg"></div>
+      </div>
+      <!-- Marqueur Actuelle (proéminent, bulle au-dessus) -->
+      <div class="tw-pin tw-pin-cur" id="tw-cur" style="left:50%">
+        <div class="tw-pin-bubble" id="tw-cur-bubble">--°C</div>
+        <div class="tw-pin-dot tw-pin-dot-cur"></div>
+      </div>
+    </div>
+    <div class="tw-bounds">
+      <span id="tw-bound-min">-- °C</span>
+      <span id="tw-bound-max">-- °C</span>
+    </div>
+  </div>
+
+  <!-- Stats ❄️ / 〰️ / ☀️ -->
+  <div class="tw-stats">
+    <div class="tw-stat">
+      <span class="tw-ico">❄️</span>
+      <span class="tw-stat-val" id="val-tempmin">--</span>
+      <span class="tw-stat-lbl">Min</span>
+    </div>
+    <div class="tw-sep"></div>
+    <div class="tw-stat">
+      <span class="tw-ico">〰️</span>
+      <span class="tw-stat-val" id="val-tempmoy">--</span>
+      <span class="tw-stat-lbl">Moyenne</span>
+    </div>
+    <div class="tw-sep"></div>
+    <div class="tw-stat">
+      <span class="tw-ico">☀️</span>
+      <span class="tw-stat-val" id="val-tempmax">--</span>
+      <span class="tw-stat-lbl">Max</span>
+    </div>
+  </div>
+</div>
 
     <!-- ── 3. PLAGE DE FILTRATION ─────────────────────────────────────────── -->
     <div class="section-title">Plage de filtration</div>
