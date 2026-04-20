@@ -170,13 +170,18 @@ export class Pool {
   // ── 1. Désinfection (Redox) — priorité absolue ───────────────────────────
   // Règle : ~30 mV par mg/L (ppm) de chlore libre ; 1 ppm = 1 g/m³
   // g_chlore = (ΔmV / 30) × V
+  // Cible anti-yoyo : normLow + 10% de la plage (si trop bas) / normHigh − 10% (si trop haut)
   if (this.#redox !== null) {
     const meta = TOPICS["redox"];
     if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
-      const cible = (meta.normLow + meta.normHigh) / 2;
+      const plage  = meta.normHigh - meta.normLow;
+      const cibleB = meta.normLow  + plage * 0.1;  // cible si trop bas
+      const cibleH = meta.normHigh - plage * 0.1;  // cible si trop haut
       if (this.#redox <= meta.normLow) {
-        const g = V !== null ? ((( cible - this.#redox) / 30) * V).toFixed(0) : '?';
-        this.#preco = `La piscine n'est plus désinfectante : ajouter ${g} g de chlore pur`;
+        const dose = V !== null
+          ? `ajouter ${(((cibleB - this.#redox) / 30) * V).toFixed(0)} g de chlore pur`
+          : `ajouter du chlore pur (volume piscine non configuré)`;
+        this.#preco = `La piscine n'est plus désinfectante : ${dose}`;
         return;
       }
       if (this.#redox >= meta.normHigh) {
@@ -199,24 +204,31 @@ export class Pool {
   // ── 3. TAC ───────────────────────────────────────────────────────────────
   // TAC bas → bicarbonate de soude (NaHCO₃) :
   //   1 mol NaHCO₃ (84 g) ≡ 50 g CaCO₃ → 84/50 = 1,68 g/m³ par ppm de TAC
-  //   g_NaHCO3 = (cible − TAC) × 1,68 × V
+  //   g_NaHCO3 = (cibleB − TAC) × 1,68 × V
   //
   // TAC haut → acide chlorhydrique 33% (densité 1,19) :
   //   1 mol HCl (36,5 g) neutralise 50 g CaCO₃ → 36,5 / 50 = 0,73 g/m³/ppm
   //   à 33% : 0,73 / (0,33 × 1,19) ≈ 1,86 mL/m³/ppm → arrondi à 1,9 mL
-  //   mL_HCl = (TAC − cible) × 1,9 × V
+  //   mL_HCl = (TAC − cibleH) × 1,9 × V
+  // Cible anti-yoyo : normLow + 10% / normHigh − 10%
   if (this.#tac !== null) {
     const meta = TOPICS["tac"];
     if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
-      const cible = (meta.normLow + meta.normHigh) / 2;
+      const plage  = meta.normHigh - meta.normLow;
+      const cibleB = meta.normLow  + plage * 0.1;
+      const cibleH = meta.normHigh - plage * 0.1;
       if (this.#tac < meta.normLow) {
-        const g = V !== null ? ((cible - this.#tac) * 1.68 * V).toFixed(0) : '?';
-        this.#preco = `TAC trop bas : ajouter ${g} g de bicarbonate de soude`;
+        const dose = V !== null
+          ? `ajouter ${((cibleB - this.#tac) * 1.68 * V).toFixed(0)} g de bicarbonate de soude`
+          : `ajouter du bicarbonate de soude (volume piscine non configuré)`;
+        this.#preco = `TAC trop bas : ${dose}`;
         return;
       }
       if (this.#tac > meta.normHigh) {
-        const mL = V !== null ? ((this.#tac - cible) * 1.9 * V).toFixed(0) : '?';
-        this.#preco = `TAC trop élevé : ajouter ${mL} mL d'acide chlorhydrique (33%)`;
+        const dose = V !== null
+          ? `ajouter ${((this.#tac - cibleH) * 1.9 * V).toFixed(0)} mL d'acide chlorhydrique (33%)`
+          : `ajouter de l'acide chlorhydrique (volume piscine non configuré)`;
+        this.#preco = `TAC trop élevé : ${dose}`;
         return;
       }
     }
@@ -225,18 +237,25 @@ export class Pool {
   // ── 4. pH ────────────────────────────────────────────────────────────────
   // pH+ (carbonate de sodium) : ~1,5 g/m³ par 0,1 unité pH
   // pH− (acide chlorhydrique 33%) : ~1,5 mL/m³ par 0,1 unité pH
+  // Cible anti-yoyo : normLow + 10% / normHigh − 10%
   if (this.#ph !== null) {
     const meta = TOPICS["ph"];
     if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
-      const cible = (meta.normLow + meta.normHigh) / 2;
+      const plage  = meta.normHigh - meta.normLow;
+      const cibleB = meta.normLow  + plage * 0.1;
+      const cibleH = meta.normHigh - plage * 0.1;
       if (this.#ph < meta.normLow) {
-        const g = V !== null ? (((cible - this.#ph) / 0.1) * 1.5 * V).toFixed(0) : '?';
-        this.#preco = `pH trop bas : ajouter ${g} g de pH+`;
+        const dose = V !== null
+          ? `ajouter ${(((cibleB - this.#ph) / 0.1) * 1.5 * V).toFixed(0)} g de pH+`
+          : `ajouter du pH+ (volume piscine non configuré)`;
+        this.#preco = `pH trop bas : ${dose}`;
         return;
       }
       if (this.#ph > meta.normHigh) {
-        const mL = V !== null ? (((this.#ph - cible) / 0.1) * 1.5 * V).toFixed(0) : '?';
-        this.#preco = `pH trop élevé : ajouter ${mL} mL de pH−`;
+        const dose = V !== null
+          ? `ajouter ${(((this.#ph - cibleH) / 0.1) * 1.5 * V).toFixed(0)} mL de pH−`
+          : `ajouter du pH− (volume piscine non configuré)`;
+        this.#preco = `pH trop élevé : ${dose}`;
         return;
       }
     }
@@ -267,21 +286,61 @@ export class Pool {
   }
 
   // ── 7. ISL — tous les constituants sont dans les normes ──────────────────
-  // ΔISL ≈ ΔpH (car ISL = pH − pHs, et pHs varie peu sur de petits ajustements)
-  // Objectif : ramener ISL dans [−0,3 ; +0,3]
-  // → ΔpH_nécessaire = |ISL| − 0,3  (pour atteindre la borne la plus proche)
+  // Stratégie à deux niveaux :
+  //   |ISL| > 1  → correction forte par le TAC, dans la limite des normes TAC.
+  //                Si la correction TAC seule est insuffisante, le reliquat est
+  //                indiqué en pH.
+  //                ΔISL ≈ Δlog10(TAC) → TAC_cible = TAC × 10^δ, plafonné à normHigh/normLow
+  //   0,3 < |ISL| ≤ 1 → réglage fin uniquement par le pH (ΔISL ≈ ΔpH)
   if (this.#isl !== null) {
     const { value, status } = this.#isl;
     if (status !== 'ok') {
-      const deltaISL = parseFloat(Math.abs(value) - 0.3).toFixed(1);
+      const tac     = this.#tac;
+      const metaTAC = TOPICS["tac"];
+
       if (value < -1) {
-        this.#preco = `ISL ${value.toFixed(2)} : eau très agressive — risque de corrosion. Augmenter le pH de ${deltaISL} unité.`;
-      } else if (value < -0.3) {
-        this.#preco = `ISL ${value.toFixed(2)} : eau légèrement agressive. Augmenter le pH d'environ ${deltaISL} unité.`;
+        // Eau très agressive → monter le TAC vers normHigh, puis pH+ pour le reliquat
+        if (tac !== null && tac > 0 && metaTAC) {
+          const delta     = Math.abs(value) - 1;
+          const tacIdeal  = tac * Math.pow(10, delta);
+          const tacCible  = Math.min(Math.round(tacIdeal), metaTAC.normHigh);
+          const islCorrige = Math.log10(tacCible / tac);   // ΔISL obtenu par le TAC
+          const islResidu  = Math.max(0, (Math.abs(value) - 1) - islCorrige);
+          let msg = V !== null
+            ? `ajouter ${((tacCible - tac) * 1.68 * V).toFixed(0)} g de bicarbonate de soude (TAC : ${tac}→${tacCible} ppm)`
+            : `augmenter le TAC à ${tacCible} ppm avec du bicarbonate de soude`;
+          if (islResidu > 0.05) msg += `, puis augmenter le pH de ${islResidu.toFixed(1)} unité avec du pH+`;
+          this.#preco = `ISL ${value.toFixed(2)} : eau très agressive (corrosion). ${msg}.`;
+        } else {
+          this.#preco = `ISL ${value.toFixed(2)} : eau très agressive (corrosion). Augmenter le TAC avec du bicarbonate de soude, puis affiner avec pH+.`;
+        }
+
       } else if (value > 1) {
-        this.#preco = `ISL ${value.toFixed(2)} : eau très entartrante — risque de dépôts calcaires. Diminuer le pH de ${deltaISL} unité.`;
+        // Eau très entartrante → baisser le TAC vers normLow, puis pH− pour le reliquat
+        if (tac !== null && tac > 0 && metaTAC) {
+          const delta     = value - 1;
+          const tacIdeal  = tac / Math.pow(10, delta);
+          const tacCible  = Math.max(Math.round(tacIdeal), metaTAC.normLow);
+          const islCorrige = Math.log10(tac / tacCible);
+          const islResidu  = Math.max(0, (value - 1) - islCorrige);
+          let msg = V !== null
+            ? `ajouter ${((tac - tacCible) * 1.9 * V).toFixed(0)} mL d'acide chlorhydrique (33%) (TAC : ${tac}→${tacCible} ppm)`
+            : `abaisser le TAC à ${tacCible} ppm avec de l'acide chlorhydrique`;
+          if (islResidu > 0.05) msg += `, puis diminuer le pH de ${islResidu.toFixed(1)} unité avec du pH−`;
+          this.#preco = `ISL ${value.toFixed(2)} : eau très entartrante (dépôts calcaires). ${msg}.`;
+        } else {
+          this.#preco = `ISL ${value.toFixed(2)} : eau très entartrante (dépôts calcaires). Abaisser le TAC avec de l'acide chlorhydrique, puis affiner avec pH−.`;
+        }
+
+      } else if (value < -0.3) {
+        // Réglage fin → pH+
+        const deltaPH = (Math.abs(value) - 0.3).toFixed(1);
+        this.#preco = `ISL ${value.toFixed(2)} : eau légèrement agressive. Augmenter le pH d'environ ${deltaPH} unité avec du pH+.`;
+
       } else if (value > 0.3) {
-        this.#preco = `ISL ${value.toFixed(2)} : eau légèrement entartrante. Diminuer le pH d'environ ${deltaISL} unité.`;
+        // Réglage fin → pH−
+        const deltaPH = (value - 0.3).toFixed(1);
+        this.#preco = `ISL ${value.toFixed(2)} : eau légèrement entartrante. Diminuer le pH d'environ ${deltaPH} unité avec du pH−.`;
       }
     }
   }
@@ -433,6 +492,7 @@ export class Pool {
       const oldVal = this.#volume;
       this.#volume = val; 
       this.#publishIfChanged('volume', oldVal, val);
+      this.#computePreco();
     } 
   }
   set debitPompe(v) { 

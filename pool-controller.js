@@ -122,7 +122,6 @@ export class PoolController {
 
   #emitPreco() {
     const preco = this.#pool.preco;
-    console.log('[DEBUG] #emitPreco → preco =', JSON.stringify(preco));
     // Émettre même si vide : l'UI doit pouvoir effacer un message précédent
     this.#emit('valueChange', 'preco', preco);
   }
@@ -154,10 +153,7 @@ export class PoolController {
       // Si la valeur modifie l'ISL, on l'émet immédiatement à sa suite
       if (ISL_DEPS.has(key)) this.#emitIsl();
       // Si la valeur modifie la préconisation, on l'émet aussi
-      if (PRECO_DEPS.has(key)) {
-        console.log('[DEBUG] PRECO_DEPS.has(' + key + ') → appel #emitPreco');
-        this.#emitPreco();
-      }
+      if (PRECO_DEPS.has(key)) this.#emitPreco();
     });
   }
 }
