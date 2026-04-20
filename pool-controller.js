@@ -21,7 +21,7 @@ import { MqttService, ConnectionState } from './mqtt-service.js';
 const ISL_DEPS = new Set(['ph', 'tds', 'th', 'tac', 'temperature', 'volume']);
 
 // Dépendances de la préconisation
-const PRECO_DEPS = new Set(['redox', 'depression', 'tac', 'ph', 'tds', 'th', 'volume']);
+const PRECO_DEPS = new Set(['redox', 'depression', 'ph' , 'tds' , 'th' , 'tac', 'temperature' , 'volume']);
 
 export { ConnectionState };
 
