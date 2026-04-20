@@ -131,6 +131,8 @@ function dispatchToUI(key, val) {
   }
 
   if (key === 'preco') {
+    console.log('[DEBUG] dispatchToUI preco →', JSON.stringify(val));
+    console.log('[DEBUG] card-preco element:', document.getElementById('card-preco'));
     ui.updatePreco(val);
   }
 

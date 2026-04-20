@@ -20,6 +20,9 @@ import { MqttService, ConnectionState } from './mqtt-service.js';
 // déclenche automatiquement un recalcul et l'émission de 'valueChange' pour 'isl'
 const ISL_DEPS = new Set(['ph', 'tds', 'th', 'tac', 'temperature']);
 
+// Dépendances de la préconisation
+const PRECO_DEPS = new Set(['redox', 'depression', 'tac', 'ph', 'tds', 'th']);
+
 export { ConnectionState };
 
 // Configuration du proxy — détail d'infrastructure masqué à l'extérieur
@@ -85,6 +88,7 @@ export class PoolController {
   setValue(key, value) {
     const result = this.#pool.setValue(key, value);
     if (result && ISL_DEPS.has(key)) this.#emitIsl();
+    if (result && PRECO_DEPS.has(key)) this.#emitPreco();
     return result;
   }
 
@@ -116,6 +120,13 @@ export class PoolController {
     if (isl !== null) this.#emit('valueChange', 'isl', isl);
   }
 
+  #emitPreco() {
+    const preco = this.#pool.preco;
+    console.log('[DEBUG] #emitPreco → preco =', JSON.stringify(preco));
+    // Émettre même si vide : l'UI doit pouvoir effacer un message précédent
+    this.#emit('valueChange', 'preco', preco);
+  }
+
   #wireInternalEvents() {
 
     this.#mqtt.on('stateChange', state => {
@@ -142,6 +153,11 @@ export class PoolController {
 
       // Si la valeur modifie l'ISL, on l'émet immédiatement à sa suite
       if (ISL_DEPS.has(key)) this.#emitIsl();
+      // Si la valeur modifie la préconisation, on l'émet aussi
+      if (PRECO_DEPS.has(key)) {
+        console.log('[DEBUG] PRECO_DEPS.has(' + key + ') → appel #emitPreco');
+        this.#emitPreco();
+      }
     });
   }
 }
