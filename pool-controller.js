@@ -18,10 +18,10 @@ import { MqttService, ConnectionState } from './mqtt-service.js';
 
 // Dépendances du calcul ISL — toute modification d'une de ces clés
 // déclenche automatiquement un recalcul et l'émission de 'valueChange' pour 'isl'
-const ISL_DEPS = new Set(['ph', 'tds', 'th', 'tac', 'temperature']);
+const ISL_DEPS = new Set(['ph', 'tds', 'th', 'tac', 'temperature', 'volume']);
 
 // Dépendances de la préconisation
-const PRECO_DEPS = new Set(['redox', 'depression', 'tac', 'ph', 'tds', 'th']);
+const PRECO_DEPS = new Set(['redox', 'depression', 'tac', 'ph', 'tds', 'th', 'volume']);
 
 export { ConnectionState };
 
