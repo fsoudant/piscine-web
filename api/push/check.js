@@ -9,7 +9,7 @@
 
 import webpush from 'web-push';
 import mqtt    from 'mqtt';
-import { put, list } from '@vercel/blob';
+import { put, list, download } from '@vercel/blob';
 
 // ── Config MQTT ───────────────────────────────────────────────────────────────
 const BASE       = 'francois.soudant@gmail.com';
@@ -91,7 +91,7 @@ async function readStore() {
   try {
     const { blobs } = await list({ prefix: BLOB_PATH });
     if (!blobs.length) return { subscriptions: [], lastAlerts: {} };
-    const res = await fetch(blobs[0].url, { cache: 'no-store' });
+    const res = await download(blobs[0].url);
     return await res.json();
   } catch {
     return { subscriptions: [], lastAlerts: {} };
@@ -100,7 +100,7 @@ async function readStore() {
 
 async function writeStore(store) {
   await put(BLOB_PATH, JSON.stringify(store, null, 2), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: false,
     contentType: 'application/json',
   });

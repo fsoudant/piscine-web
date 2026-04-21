@@ -4,7 +4,7 @@
 // POST   /api/push/subscribe   → enregistre un abonné
 // DELETE /api/push/subscribe   → supprime un abonné
 
-import { put, list } from '@vercel/blob';
+import { put, list, download } from '@vercel/blob';
 
 const BLOB_PATH = 'piscine-push-subs.json';
 
@@ -14,8 +14,7 @@ async function readStore() {
   try {
     const { blobs } = await list({ prefix: BLOB_PATH });
     if (!blobs.length) return { subscriptions: [], lastAlerts: {} };
-    // cache: 'no-store' : on veut toujours la version la plus récente
-    const res = await fetch(blobs[0].url, { cache: 'no-store' });
+    const res = await download(blobs[0].url);
     return await res.json();
   } catch (err) {
     console.warn('⚠️ Impossible de lire le store push:', err.message);
@@ -25,8 +24,8 @@ async function readStore() {
 
 async function writeStore(store) {
   await put(BLOB_PATH, JSON.stringify(store, null, 2), {
-    access: 'public',
-    addRandomSuffix: false,   // URL déterministe — requis pour list() + overwrite
+    access: 'private',
+    addRandomSuffix: false,
     contentType: 'application/json',
   });
 }
