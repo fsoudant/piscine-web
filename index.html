@@ -20,15 +20,9 @@
 
   /* ── Bouton cloche notifications ── */
   .notif-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px 6px;
-    border-radius: 8px;
-    transition: background 0.2s, opacity 0.2s;
-    line-height: 1;
-    opacity: 0.7;
+    background: none; border: none; cursor: pointer;
+    font-size: 16px; padding: 4px 6px; border-radius: 8px;
+    transition: background 0.2s, opacity 0.2s; line-height: 1; opacity: 0.7;
   }
   .notif-btn:hover   { background: rgba(255,255,255,0.08); opacity: 1; }
   .notif-btn.active  { opacity: 1; filter: drop-shadow(0 0 4px rgba(0,212,255,0.7)); }
@@ -41,12 +35,7 @@
 
 <div id="statusBar">
   <div class="logo">🏊 PISCINE</div>
-
-  <!-- Bouton notifications push — positionné entre logo et statut connexion -->
-  <button id="notifBtn" class="notif-btn" title="Activer les notifications push" aria-label="Notifications push">
-    🔕
-  </button>
-
+  <button id="notifBtn" class="notif-btn" title="Activer les notifications push" aria-label="Notifications push">🔕</button>
   <div id="connStatus">
     <div id="connDot"></div>
     <span id="connLabel">Déconnecté</span>
@@ -62,7 +51,9 @@
       <div class="mode-picker" id="modePicker"></div>
     </div>
 
+	
     <!-- ── 2. TEMPÉRATURES ───────────────────────────────────────────────── -->
+    <!--
     <div class="section-title">Températures</div>
     <div class="card">
       <div class="card-row">
@@ -84,6 +75,63 @@
       <div class="temp-mini-card"><div class="temp-mini-label">☀️ Maximum</div><div class="temp-mini-val"><span id="val-tempmax">--</span> <span id="unit-tempmax"></span></div></div>
       <div class="temp-mini-card"><div class="temp-mini-label">🔧 Fréquence</div><div class="temp-mini-val"><span id="val-freq">--</span> <span id="unit-freq"></span></div></div>
     </div>
+    -->
+    <!-- ── 2. TEMPÉRATURES ───────────────────────────────────────────────── -->
+<div class="section-title">Températures</div>
+<div class="card temp-widget">
+
+  <!-- En-tête : temp actuelle + badge -->
+  <div class="tw-header">
+    <div>
+      <div class="tw-sup-label">Température actuelle</div>
+      <div class="tw-main">
+        <span class="tw-main-val" id="val-temperature">--</span>
+        <span class="tw-main-unit">°C</span>
+      </div>
+    </div>
+    <span class="badge" id="badge-temperature"></span>
+  </div>
+
+  <!-- Barre thermique min → max avec marqueurs -->
+  <div class="tw-range">
+    <div class="tw-bar-outer">
+      <!-- Marqueur Moyenne (discret) -->
+      <div class="tw-pin tw-pin-avg" id="tw-avg" style="left:50%">
+        <div class="tw-pin-dot tw-pin-dot-avg"></div>
+      </div>
+      <!-- Marqueur Actuelle (proéminent, bulle au-dessus) -->
+      <div class="tw-pin tw-pin-cur" id="tw-cur" style="left:50%">
+        <div class="tw-pin-bubble" id="tw-cur-bubble">--°C</div>
+        <div class="tw-pin-dot tw-pin-dot-cur"></div>
+      </div>
+    </div>
+    <div class="tw-bounds">
+      <span id="tw-bound-min">-- °C</span>
+      <span id="tw-bound-max">-- °C</span>
+    </div>
+  </div>
+
+  <!-- Stats ❄️ / 〰️ / ☀️ -->
+  <div class="tw-stats">
+    <div class="tw-stat">
+      <span class="tw-ico">❄️</span>
+      <span class="tw-stat-val" id="val-tempmin">--</span>
+      <span class="tw-stat-lbl">Min</span>
+    </div>
+    <div class="tw-sep"></div>
+    <div class="tw-stat">
+      <span class="tw-ico">〰️</span>
+      <span class="tw-stat-val" id="val-tempmoy">--</span>
+      <span class="tw-stat-lbl">Moyenne</span>
+    </div>
+    <div class="tw-sep"></div>
+    <div class="tw-stat">
+      <span class="tw-ico">☀️</span>
+      <span class="tw-stat-val" id="val-tempmax">--</span>
+      <span class="tw-stat-lbl">Max</span>
+    </div>
+  </div>
+</div>
 
     <!-- ── 3. PLAGE DE FILTRATION ─────────────────────────────────────────── -->
     <div class="section-title">Plage de filtration</div>
@@ -116,106 +164,158 @@
       </div>
     </div>
 
-    <!-- ── 4. PHYSICO-CHIMIE ──────────────────────────────────────────────── -->
-    <div class="section-title">Physico-chimie</div>
+<!-- ── 4. PHYSICO-CHIMIE ──────────────────────────────────────────────── -->
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">pH</div>
-        <div><span class="card-value" id="val-ph">--</span> <span class="badge" id="badge-ph"></span></div>
+<div class="section-title">Physico-chimie</div>
+<div class="card chem-widget">
+
+  <!-- pH -->
+  <div class="cr" id="cr-ph">
+    <div class="cr-header">
+      <span class="cr-label">pH</span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-ph">--</span>
+        <span class="badge" id="badge-ph"></span>
       </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-ph"></div>
-        <div class="slider-fill" id="fill-ph"></div>
-        <div class="slider-thumb" id="thumb-ph"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-ph"></span><span id="norm-label-ph"></span><span id="max-label-ph"></span></div>
     </div>
-
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">TAC <span class="editable-tag" title="Cliquez pour modifier">✏️</span></div>
-        <div><span class="card-value" id="val-tac">--</span><span class="card-unit" id="unit-tac"></span>
-             <span class="badge" id="badge-tac"></span></div>
+    <div class="cr-track" id="bar-ph">
+      <div class="cr-pin" id="pin-ph" style="left:50%">
+        <div class="cr-bubble" id="bubble-ph">--</div>
+        <div class="cr-dot" id="dot-ph"></div>
       </div>
-      <div class="slider-track editable-slider" id="track-tac" data-key="tac">
-        <div class="slider-norm" id="norm-tac"></div>
-        <div class="slider-fill" id="fill-tac"></div>
-        <div class="slider-thumb" id="thumb-tac"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-tac"></span><span id="norm-label-tac"></span><span id="max-label-tac"></span></div>
     </div>
+    <div class="cr-bounds"><span id="crmin-ph"></span><span id="crnorm-ph"></span><span id="crmax-ph"></span></div>
+  </div>
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">TH — Dureté <span class="editable-tag" title="Cliquez pour modifier">✏️</span></div>
-        <div><span class="card-value" id="val-th">--</span><span class="card-unit" id="unit-th"></span>
-             <span class="badge" id="badge-th"></span></div>
+  <div class="cr-divider"></div>
+
+  <!-- Redox -->
+  <div class="cr" id="cr-redox">
+    <div class="cr-header">
+      <span class="cr-label">Redox</span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-redox">--</span><span class="cr-unit">mV</span>
+        <span class="badge" id="badge-redox"></span>
       </div>
-      <div class="slider-track editable-slider" id="track-th" data-key="th">
-        <div class="slider-norm" id="norm-th"></div>
-        <div class="slider-fill" id="fill-th"></div>
-        <div class="slider-thumb" id="thumb-th"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-th"></span><span id="norm-label-th"></span><span id="max-label-th"></span></div>
     </div>
-
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">TDS</div>
-        <div><span class="card-value" id="val-tds">--</span><span class="card-unit" id="unit-tds"></span></div>
+    <div class="cr-track" id="bar-redox">
+      <div class="cr-pin" id="pin-redox" style="left:50%">
+        <div class="cr-bubble" id="bubble-redox">--</div>
+        <div class="cr-dot" id="dot-redox"></div>
       </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-tds"></div>
-        <div class="slider-fill" id="fill-tds"></div>
-        <div class="slider-thumb" id="thumb-tds"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-tds"></span><span id="norm-label-tds"></span><span id="max-label-tds"></span></div>
     </div>
+    <div class="cr-bounds"><span id="crmin-redox"></span><span id="crnorm-redox"></span><span id="crmax-redox"></span></div>
+  </div>
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">Redox</div>
-        <div><span class="card-value" id="val-redox">--</span><span class="card-unit" id="unit-redox"></span>
-             <span class="badge" id="badge-redox"></span></div>
+  <div class="cr-divider"></div>
+
+  <!-- TAC (éditable) -->
+  <div class="cr chem-editable" id="cr-tac" data-key="tac">
+    <div class="cr-header">
+      <span class="cr-label">TAC <span class="editable-tag" title="Touchez pour modifier">✏️</span></span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-tac">--</span><span class="cr-unit">ppm</span>
+        <span class="badge" id="badge-tac"></span>
       </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-redox"></div>
-        <div class="slider-fill" id="fill-redox"></div>
-        <div class="slider-thumb" id="thumb-redox"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-redox"></span><span id="norm-label-redox"></span><span id="max-label-redox"></span></div>
     </div>
+    <div class="cr-track" id="bar-tac">
+      <div class="cr-pin" id="pin-tac" style="left:50%">
+        <div class="cr-bubble" id="bubble-tac">--</div>
+        <div class="cr-dot" id="dot-tac"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span id="crmin-tac"></span><span id="crnorm-tac"></span><span id="crmax-tac"></span></div>
+  </div>
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">ISL — Indice de Langelier</div>
+  <div class="cr-divider"></div>
+
+  <!-- TH (éditable) -->
+  <div class="cr chem-editable" id="cr-th" data-key="th">
+    <div class="cr-header">
+      <span class="cr-label">TH — Dureté <span class="editable-tag" title="Touchez pour modifier">✏️</span></span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-th">--</span><span class="cr-unit">ppm</span>
+        <span class="badge" id="badge-th"></span>
+      </div>
+    </div>
+    <div class="cr-track" id="bar-th">
+      <div class="cr-pin" id="pin-th" style="left:50%">
+        <div class="cr-bubble" id="bubble-th">--</div>
+        <div class="cr-dot" id="dot-th"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span id="crmin-th"></span><span id="crnorm-th"></span><span id="crmax-th"></span></div>
+  </div>
+
+  <div class="cr-divider"></div>
+
+  <!-- TDS -->
+  <div class="cr" id="cr-tds">
+    <div class="cr-header">
+      <span class="cr-label">TDS</span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-tds">--</span><span class="cr-unit">ppm</span>
+      </div>
+    </div>
+    <div class="cr-track" id="bar-tds">
+      <div class="cr-pin" id="pin-tds" style="left:50%">
+        <div class="cr-bubble" id="bubble-tds">--</div>
+        <div class="cr-dot" id="dot-tds"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span id="crmin-tds"></span><span id="crnorm-tds"></span><span id="crmax-tds"></span></div>
+  </div>
+
+</div>
+
+<!-- ── 5. ÉQUILIBRE & PRESSION ───────────────────────────────────────── -->
+<div class="section-title">Équilibre & Pression</div>
+<div class="card chem-widget">
+
+  <!-- ISL -->
+  <div class="cr" id="cr-isl">
+    <div class="cr-header">
+      <span class="cr-label">ISL — Indice de Langelier</span>
+      <div class="cr-right">
+        <span class="cr-val cr-val-isl" id="val-isl">--</span>
         <span class="badge" id="badge-isl"></span>
       </div>
-      <div class="isl-value" id="val-isl">--</div>
-      <div class="isl-label" id="isl-norm-label"></div>
-      <div class="slider-track" style="margin-top:8px">
-        <div class="slider-norm" id="norm-isl"></div>
-        <div class="slider-fill" id="fill-isl"></div>
-        <div class="slider-thumb" id="thumb-isl"></div>
-      </div>
-      <div class="slider-labels"><span>−5</span><span>0</span><span>+5</span></div>
     </div>
+    <div class="isl-label" id="isl-norm-label">Équilibré entre −0,3 et +0,3</div>
+    <div class="cr-track" id="bar-isl">
+      <div class="cr-pin" id="pin-isl" style="left:50%">
+        <div class="cr-bubble" id="bubble-isl">--</div>
+        <div class="cr-dot" id="dot-isl"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span>−5</span><span>0</span><span>+5</span></div>
+  </div>
 
-    <!-- ── 5. DÉPRESSION POMPE ────────────────────────────────────────────── -->
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">Dépression pompe</div>
-        <div><span class="card-value" id="val-depression">--</span><span class="card-unit" id="unit-depression"></span>
-             <span class="badge" id="badge-depression"></span></div>
+  <div class="cr-divider"></div>
+
+  <!-- Dépression -->
+  <div class="cr" id="cr-depression">
+    <div class="cr-header">
+      <span class="cr-label">Dépression pompe</span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-depression">--</span><span class="cr-unit">bar</span>
+        <span class="badge" id="badge-depression"></span>
       </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-depression"></div>
-        <div class="slider-fill" id="fill-depression"></div>
-        <div class="slider-thumb" id="thumb-depression"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-depression"></span><span id="norm-label-depression"></span><span id="max-label-depression"></span></div>
     </div>
+    <div class="cr-track" id="bar-depression">
+      <div class="cr-pin" id="pin-depression" style="left:50%">
+        <div class="cr-bubble" id="bubble-depression">--</div>
+        <div class="cr-dot" id="dot-depression"></div>
+      </div>
+    </div>
+    <div class="cr-bounds">
+      <span id="crmin-depression"></span>
+      <span id="crnorm-depression"></span>
+      <span id="crmax-depression"></span>
+    </div>
+  </div>
+
+</div>
 
     <!-- ── 6. PRÉCONISATION ───────────────────────────────────────────────── -->
     <div class="card preco-card" id="card-preco" style="display:none">
@@ -293,6 +393,7 @@
         <div class="slider-labels"><span id="min-label-p-etalonph2"></span><span id="max-label-p-etalonph2"></span></div>
       </div>
       <div class="param-row" style="margin-bottom:0; margin-top:12px">
+        <!-- data-etakey : identifiant Pool (camelCase) -->
         <button class="prime-btn etalon-btn" id="btn-etalonnageph1" data-etakey="etalonnagePh1">
           🔬 Étalonner pH 1 — <span class="etalon-val" id="lbl-etalonph1">--</span>
         </button>
