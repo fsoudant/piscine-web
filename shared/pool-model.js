@@ -70,6 +70,7 @@ export class Pool {
   #mqttService = null;
   #receivingFromMqtt = false; // Guard : empêche le re-publish des valeurs reçues de MQTT
 
+
   constructor(mqttService = null) {
     this.#mode = null; this.#ph = null; this.#redox = null;
     this.#tac = null; this.#tds = null; this.#th = null;
