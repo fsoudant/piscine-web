@@ -255,35 +255,54 @@
 
 </div>
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">ISL — Indice de Langelier</div>
+<!-- ── 5. ÉQUILIBRE & PRESSION ───────────────────────────────────────── -->
+<div class="section-title">Équilibre & Pression</div>
+<div class="card chem-widget">
+
+  <!-- ISL -->
+  <div class="cr" id="cr-isl">
+    <div class="cr-header">
+      <span class="cr-label">ISL — Indice de Langelier</span>
+      <div class="cr-right">
+        <span class="cr-val cr-val-isl" id="val-isl">--</span>
         <span class="badge" id="badge-isl"></span>
       </div>
-      <div class="isl-value" id="val-isl">--</div>
-      <div class="isl-label" id="isl-norm-label"></div>
-      <div class="slider-track" style="margin-top:8px">
-        <div class="slider-norm" id="norm-isl"></div>
-        <div class="slider-fill" id="fill-isl"></div>
-        <div class="slider-thumb" id="thumb-isl"></div>
-      </div>
-      <div class="slider-labels"><span>−5</span><span>0</span><span>+5</span></div>
     </div>
+    <div class="isl-label" id="isl-norm-label">Équilibré entre −0,3 et +0,3</div>
+    <div class="cr-track" id="bar-isl">
+      <div class="cr-pin" id="pin-isl" style="left:50%">
+        <div class="cr-bubble" id="bubble-isl">--</div>
+        <div class="cr-dot" id="dot-isl"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span>−5</span><span>0</span><span>+5</span></div>
+  </div>
 
-    <!-- ── 5. DÉPRESSION POMPE ────────────────────────────────────────────── -->
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">Dépression pompe</div>
-        <div><span class="card-value" id="val-depression">--</span><span class="card-unit" id="unit-depression"></span>
-             <span class="badge" id="badge-depression"></span></div>
+  <div class="cr-divider"></div>
+
+  <!-- Dépression -->
+  <div class="cr" id="cr-depression">
+    <div class="cr-header">
+      <span class="cr-label">Dépression pompe</span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-depression">--</span><span class="cr-unit">bar</span>
+        <span class="badge" id="badge-depression"></span>
       </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-depression"></div>
-        <div class="slider-fill" id="fill-depression"></div>
-        <div class="slider-thumb" id="thumb-depression"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-depression"></span><span id="norm-label-depression"></span><span id="max-label-depression"></span></div>
     </div>
+    <div class="cr-track" id="bar-depression">
+      <div class="cr-pin" id="pin-depression" style="left:50%">
+        <div class="cr-bubble" id="bubble-depression">--</div>
+        <div class="cr-dot" id="dot-depression"></div>
+      </div>
+    </div>
+    <div class="cr-bounds">
+      <span id="crmin-depression"></span>
+      <span id="crnorm-depression"></span>
+      <span id="crmax-depression"></span>
+    </div>
+  </div>
+
+</div>
 
     <!-- ── 6. PRÉCONISATION ───────────────────────────────────────────────── -->
     <div class="card preco-card" id="card-preco" style="display:none">

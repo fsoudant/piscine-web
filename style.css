@@ -252,6 +252,8 @@ input[type=range].edit-slider:disabled { opacity: .4; cursor: default; }
 }
 .cr-unit { font-size: 11px; color: var(--text3); }
 
+.cr-val-isl { font-size: 24px; }
+
 /* Barre dégradée — background positionné par JS */
 .cr-track {
   position: relative; height: 8px; border-radius: 4px;

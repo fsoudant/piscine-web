@@ -68,15 +68,12 @@ ui.onEtalonnage = poolKey => {
 // ── Dispatch valeurs vers UI ───────────────────────────────────────────────
 
 function dispatchToUI(key, val) {
-
-const readSliderKeys = ['temperature', 'depression'];
-if (readSliderKeys.includes(key)) {
-  updateReadSlider(key, val);
-}
-
-const chemKeys = ['ph', 'redox', 'tac', 'th', 'tds'];
-if (chemKeys.includes(key)) {
-  updateChemRow(key, val);
+	if (key === 'temperature') {
+ 		 updateReadSlider(key, val);
+	}
+	const chemKeys = ['ph', 'redox', 'tac', 'th', 'tds', 'depression'];
+	if (chemKeys.includes(key)) {
+ 	 updateChemRow(key, val);
 }
   const simpleMap = {
     tempMoy:   'val-tempmoy',
@@ -139,7 +136,7 @@ if (chemKeys.includes(key)) {
   }
 
   if (key === 'isl') {
-    ui.updateISL(val);
+    ui.updateIslRow(val);
   }
 }
 
@@ -211,6 +208,22 @@ function initChemWidget() {
     if (maxEl)  maxEl.textContent  = meta.max  + u;
     if (normEl) normEl.textContent = `${fmtN(meta.normLow)} – ${fmtN(meta.normHigh)}` + u;
   });
+  
+// ISL — plage fixe −5 / +5, normes −0.3 / +0.3
+  const islBar = document.getElementById('bar-isl');
+  if (islBar) {
+    const ISL_MIN = -5, ISL_MAX = 5, ISL_LOW = -0.3, ISL_HIGH = 0.3;
+    const range   = ISL_MAX - ISL_MIN;
+    const lowPct  = (ISL_LOW  - ISL_MIN) / range * 100; // ≈ 47%
+    const highPct = (ISL_HIGH - ISL_MIN) / range * 100; // ≈ 53%
+    const tw = 5;
+    const l1 = (lowPct  - tw).toFixed(1);
+    const l2 = lowPct.toFixed(1);
+    const h1 = highPct.toFixed(1);
+    const h2 = (highPct + tw).toFixed(1);
+    islBar.style.background =
+      `linear-gradient(90deg, var(--danger) 0%, var(--warning) ${l1}%, var(--success) ${l2}%, var(--success) ${h1}%, var(--warning) ${h2}%, var(--danger) 100%)`;
+  }
 }
 
 function updateChemRow(key, val) {
@@ -232,6 +245,31 @@ function updateChemRow(key, val) {
   if (badge)  { badge.textContent = badgeMap[status]; badge.className = 'badge ' + status; }
   if (pin)    pin.style.left      = pct + '%';
   if (bubble) bubble.textContent  = display + (unit ? '\u00a0' + unit : '');
+  if (dot) {
+    dot.style.borderColor = colorMap[status];
+    dot.style.boxShadow   = `0 0 8px ${colorMap[status]}80, 0 2px 4px rgba(0,0,0,.4)`;
+  }
+}
+
+function updateIslRow(result) {
+  if (!result) return;
+  const { value, status } = result;
+  const ISL_MIN = -5, ISL_MAX = 5;
+  const pct    = Math.max(2, Math.min(98, (value - ISL_MIN) / (ISL_MAX - ISL_MIN) * 100));
+  const display = value.toFixed(2);
+  const badgeMap = { ok: '✓ Équilibré', warn: '△ À corriger', danger: '⚠ Corrosif/Entartrant' };
+  const colorMap = { ok: 'var(--success)', warn: 'var(--warning)', danger: 'var(--danger)' };
+
+  const valEl  = document.getElementById('val-isl');
+  const badge  = document.getElementById('badge-isl');
+  const pin    = document.getElementById('pin-isl');
+  const bubble = document.getElementById('bubble-isl');
+  const dot    = document.getElementById('dot-isl');
+
+  if (valEl)  { valEl.textContent = display; valEl.style.color = colorMap[status]; }
+  if (badge)  { badge.textContent = badgeMap[status]; badge.className = 'badge ' + status; }
+  if (pin)    pin.style.left     = pct + '%';
+  if (bubble) bubble.textContent = display;
   if (dot) {
     dot.style.borderColor = colorMap[status];
     dot.style.boxShadow   = `0 0 8px ${colorMap[status]}80, 0 2px 4px rgba(0,0,0,.4)`;
@@ -286,20 +324,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── Sliders de lecture (température, dépression) ──────────────────────
+  /*
   ['temperature', 'depression'].forEach(key => {
     const meta = TOPICS[key];
     ui.setBoundsLabels(key, meta.min, meta.max, meta.unit);
     if (meta.normLow !== undefined) ui.setNormLabel(key, meta.normLow, meta.normHigh, meta.unit);
     ui.setUnit(`unit-${key}`, meta.unit);
   });
+  */
 
   // ── Valeurs simples (fréquence) ───────────────────────────────────────
   ['tempMoy', 'tempMin', 'tempMax', 'frequence'].forEach(key => {
     ui.setUnit(`unit-${key}`, TOPICS[key].unit);
   });
-
-  // ── ISL ───────────────────────────────────────────────────────────────
-  ui.setISLNormLabel('Équilibré entre −0,3 et +0,3');
 
   // ── Paramètres (onglet Paramètres) ────────────────────────────────────
   [
