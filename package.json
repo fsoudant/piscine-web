@@ -7,15 +7,17 @@
   "scripts": {
     "dev": "vercel dev"
   },
-   "dependencies": {
-     "mqtt": "^5.0.0"
+  "dependencies": {
+    "@vercel/blob": "^2.3.3",
+    "mqtt": "^5.0.0",
+    "web-push": "^3.6.7"
   },
   "keywords": [
-  	"piscine", 
-  	"iot", 
-  	"mqtt", 
-  	"alexa", 
-  	"pwa"
+    "piscine",
+    "iot",
+    "mqtt",
+    "alexa",
+    "pwa"
   ],
   "author": "François Soudant",
   "license": "MIT"
