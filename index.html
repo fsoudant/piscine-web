@@ -151,76 +151,109 @@
       </div>
     </div>
 
-    <!-- ── 4. PHYSICO-CHIMIE ──────────────────────────────────────────────── -->
-    <div class="section-title">Physico-chimie</div>
+<!-- ── 4. PHYSICO-CHIMIE ──────────────────────────────────────────────── -->
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">pH</div>
-        <div><span class="card-value" id="val-ph">--</span> <span class="badge" id="badge-ph"></span></div>
-      </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-ph"></div>
-        <div class="slider-fill" id="fill-ph"></div>
-        <div class="slider-thumb" id="thumb-ph"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-ph"></span><span id="norm-label-ph"></span><span id="max-label-ph"></span></div>
-    </div>
+<div class="section-title">Physico-chimie</div>
+<div class="card chem-widget">
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">TAC <span class="editable-tag" title="Cliquez pour modifier">✏️</span></div>
-        <div><span class="card-value" id="val-tac">--</span><span class="card-unit" id="unit-tac"></span>
-             <span class="badge" id="badge-tac"></span></div>
+  <!-- pH -->
+  <div class="cr" id="cr-ph">
+    <div class="cr-header">
+      <span class="cr-label">pH</span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-ph">--</span>
+        <span class="badge" id="badge-ph"></span>
       </div>
-      <div class="slider-track editable-slider" id="track-tac" data-key="tac">
-        <div class="slider-norm" id="norm-tac"></div>
-        <div class="slider-fill" id="fill-tac"></div>
-        <div class="slider-thumb" id="thumb-tac"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-tac"></span><span id="norm-label-tac"></span><span id="max-label-tac"></span></div>
     </div>
+    <div class="cr-track" id="bar-ph">
+      <div class="cr-pin" id="pin-ph" style="left:50%">
+        <div class="cr-bubble" id="bubble-ph">--</div>
+        <div class="cr-dot" id="dot-ph"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span id="crmin-ph"></span><span id="crnorm-ph"></span><span id="crmax-ph"></span></div>
+  </div>
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">TH — Dureté <span class="editable-tag" title="Cliquez pour modifier">✏️</span></div>
-        <div><span class="card-value" id="val-th">--</span><span class="card-unit" id="unit-th"></span>
-             <span class="badge" id="badge-th"></span></div>
-      </div>
-      <div class="slider-track editable-slider" id="track-th" data-key="th">
-        <div class="slider-norm" id="norm-th"></div>
-        <div class="slider-fill" id="fill-th"></div>
-        <div class="slider-thumb" id="thumb-th"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-th"></span><span id="norm-label-th"></span><span id="max-label-th"></span></div>
-    </div>
+  <div class="cr-divider"></div>
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">TDS</div>
-        <div><span class="card-value" id="val-tds">--</span><span class="card-unit" id="unit-tds"></span></div>
+  <!-- Redox -->
+  <div class="cr" id="cr-redox">
+    <div class="cr-header">
+      <span class="cr-label">Redox</span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-redox">--</span><span class="cr-unit">mV</span>
+        <span class="badge" id="badge-redox"></span>
       </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-tds"></div>
-        <div class="slider-fill" id="fill-tds"></div>
-        <div class="slider-thumb" id="thumb-tds"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-tds"></span><span id="norm-label-tds"></span><span id="max-label-tds"></span></div>
     </div>
+    <div class="cr-track" id="bar-redox">
+      <div class="cr-pin" id="pin-redox" style="left:50%">
+        <div class="cr-bubble" id="bubble-redox">--</div>
+        <div class="cr-dot" id="dot-redox"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span id="crmin-redox"></span><span id="crnorm-redox"></span><span id="crmax-redox"></span></div>
+  </div>
 
-    <div class="card">
-      <div class="card-row">
-        <div class="card-label">Redox</div>
-        <div><span class="card-value" id="val-redox">--</span><span class="card-unit" id="unit-redox"></span>
-             <span class="badge" id="badge-redox"></span></div>
+  <div class="cr-divider"></div>
+
+  <!-- TAC (éditable) -->
+  <div class="cr chem-editable" id="cr-tac" data-key="tac">
+    <div class="cr-header">
+      <span class="cr-label">TAC <span class="editable-tag" title="Touchez pour modifier">✏️</span></span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-tac">--</span><span class="cr-unit">ppm</span>
+        <span class="badge" id="badge-tac"></span>
       </div>
-      <div class="slider-track">
-        <div class="slider-norm" id="norm-redox"></div>
-        <div class="slider-fill" id="fill-redox"></div>
-        <div class="slider-thumb" id="thumb-redox"></div>
-      </div>
-      <div class="slider-labels"><span id="min-label-redox"></span><span id="norm-label-redox"></span><span id="max-label-redox"></span></div>
     </div>
+    <div class="cr-track" id="bar-tac">
+      <div class="cr-pin" id="pin-tac" style="left:50%">
+        <div class="cr-bubble" id="bubble-tac">--</div>
+        <div class="cr-dot" id="dot-tac"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span id="crmin-tac"></span><span id="crnorm-tac"></span><span id="crmax-tac"></span></div>
+  </div>
+
+  <div class="cr-divider"></div>
+
+  <!-- TH (éditable) -->
+  <div class="cr chem-editable" id="cr-th" data-key="th">
+    <div class="cr-header">
+      <span class="cr-label">TH — Dureté <span class="editable-tag" title="Touchez pour modifier">✏️</span></span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-th">--</span><span class="cr-unit">ppm</span>
+        <span class="badge" id="badge-th"></span>
+      </div>
+    </div>
+    <div class="cr-track" id="bar-th">
+      <div class="cr-pin" id="pin-th" style="left:50%">
+        <div class="cr-bubble" id="bubble-th">--</div>
+        <div class="cr-dot" id="dot-th"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span id="crmin-th"></span><span id="crnorm-th"></span><span id="crmax-th"></span></div>
+  </div>
+
+  <div class="cr-divider"></div>
+
+  <!-- TDS -->
+  <div class="cr" id="cr-tds">
+    <div class="cr-header">
+      <span class="cr-label">TDS</span>
+      <div class="cr-right">
+        <span class="cr-val" id="val-tds">--</span><span class="cr-unit">ppm</span>
+      </div>
+    </div>
+    <div class="cr-track" id="bar-tds">
+      <div class="cr-pin" id="pin-tds" style="left:50%">
+        <div class="cr-bubble" id="bubble-tds">--</div>
+        <div class="cr-dot" id="dot-tds"></div>
+      </div>
+    </div>
+    <div class="cr-bounds"><span id="crmin-tds"></span><span id="crnorm-tds"></span><span id="crmax-tds"></span></div>
+  </div>
+
+</div>
 
     <div class="card">
       <div class="card-row">

@@ -69,11 +69,15 @@ ui.onEtalonnage = poolKey => {
 
 function dispatchToUI(key, val) {
 
-  const readSliderKeys = ['ph', 'redox', 'tds', 'temperature', 'depression', 'tac', 'th'];
-  if (readSliderKeys.includes(key)) {
-    updateReadSlider(key, val);
-  }
+const readSliderKeys = ['temperature', 'depression'];
+if (readSliderKeys.includes(key)) {
+  updateReadSlider(key, val);
+}
 
+const chemKeys = ['ph', 'redox', 'tac', 'th', 'tds'];
+if (chemKeys.includes(key)) {
+  updateChemRow(key, val);
+}
   const simpleMap = {
     tempMoy:   'val-tempmoy',
     tempMin:   'val-tempmin',
@@ -168,6 +172,72 @@ function updateTempWidget() {
   }
 }
 
+function initChemWidget() {
+  const chemKeys = ['ph', 'redox', 'tac', 'th', 'tds'];
+  chemKeys.forEach(key => {
+    const meta = TOPICS[key];
+    const bar  = document.getElementById('bar-' + key);
+    if (!bar || meta.normLow === undefined) return;
+
+    const range   = meta.max - meta.min;
+    const lowPct  = (meta.normLow  - meta.min) / range * 100;
+    const highPct = (meta.normHigh - meta.min) / range * 100;
+    const tw = 5; // largeur de la zone de transition en %
+
+    const l1 = Math.max(0,   lowPct  - tw).toFixed(1);
+    const l2 = lowPct.toFixed(1);
+    const h1 = highPct.toFixed(1);
+    const h2 = Math.min(100, highPct + tw).toFixed(1);
+
+    let gradient;
+    if (highPct >= 99) {
+      // Pas de danger à droite (ex: TDS — normHigh = max)
+      gradient = `linear-gradient(90deg, var(--danger) 0%, var(--warning) ${l1}%, var(--success) ${l2}%, var(--success) 100%)`;
+    } else if (lowPct <= 1) {
+      // Pas de danger à gauche
+      gradient = `linear-gradient(90deg, var(--success) 0%, var(--success) ${h1}%, var(--warning) ${h2}%, var(--danger) 100%)`;
+    } else {
+      gradient = `linear-gradient(90deg, var(--danger) 0%, var(--warning) ${l1}%, var(--success) ${l2}%, var(--success) ${h1}%, var(--warning) ${h2}%, var(--danger) 100%)`;
+    }
+    bar.style.background = gradient;
+
+    // Labels
+    const fmtN = v => Number.isInteger(v) ? v : v.toFixed(1);
+    const u = meta.unit ? '\u00a0' + meta.unit : '';
+    const minEl  = document.getElementById('crmin-'  + key);
+    const maxEl  = document.getElementById('crmax-'  + key);
+    const normEl = document.getElementById('crnorm-' + key);
+    if (minEl)  minEl.textContent  = meta.min  + u;
+    if (maxEl)  maxEl.textContent  = meta.max  + u;
+    if (normEl) normEl.textContent = `${fmtN(meta.normLow)} – ${fmtN(meta.normHigh)}` + u;
+  });
+}
+
+function updateChemRow(key, val) {
+  const meta    = TOPICS[key];
+  const status  = controller.classify(key, val);
+  const pct     = Math.max(2, Math.min(98, controller.normalize(key, val) * 100));
+  const display = val.toFixed(meta.decimals);
+  const unit    = meta.unit;
+  const badgeMap = { ok: '✓ OK', warn: '△ Hors norme', danger: '⚠ Alerte', info: '' };
+  const colorMap = { ok: 'var(--success)', warn: 'var(--warning)', danger: 'var(--danger)', info: 'var(--accent)' };
+
+  const valEl  = document.getElementById('val-'    + key);
+  const badge  = document.getElementById('badge-'  + key);
+  const pin    = document.getElementById('pin-'    + key);
+  const bubble = document.getElementById('bubble-' + key);
+  const dot    = document.getElementById('dot-'    + key);
+
+  if (valEl)  valEl.textContent   = display;
+  if (badge)  { badge.textContent = badgeMap[status]; badge.className = 'badge ' + status; }
+  if (pin)    pin.style.left      = pct + '%';
+  if (bubble) bubble.textContent  = display + (unit ? '\u00a0' + unit : '');
+  if (dot) {
+    dot.style.borderColor = colorMap[status];
+    dot.style.boxShadow   = `0 0 8px ${colorMap[status]}80, 0 2px 4px rgba(0,0,0,.4)`;
+  }
+}
+
 function updateReadSlider(key, val) {
   const meta    = TOPICS[key];
   const pct     = controller.normalize(key, val) * 100;
@@ -191,31 +261,47 @@ document.addEventListener('DOMContentLoaded', () => {
   ui.init();
   ui.buildModeButtons(MODES);
 
-  // ── Sliders de lecture (pH, Redox, TDS, Température, Dépression) ──────────
-  ['ph', 'redox', 'tds', 'temperature', 'depression'].forEach(key => {
+  // ── NOUVEAU : initialise les barres dégradées ──────────────────────────
+  initChemWidget();
+
+  // ── NOUVEAU : bind édition TAC et TH ──────────────────────────────────
+  ['tac', 'th'].forEach(key => {
+    const row = document.getElementById('cr-' + key);
+    if (!row) return;
+    row.addEventListener('click', () => {
+      const meta = TOPICS[key];
+      const cur  = controller.getValue(key);
+      const newVal = prompt(
+        `Nouvelle valeur pour ${key.toUpperCase()} (${meta.min} – ${meta.max} ${meta.unit})`,
+        cur !== null ? cur : ''
+      );
+      if (newVal === null) return;
+      const num = parseFloat(newVal);
+      if (isNaN(num) || num < meta.min || num > meta.max) {
+        alert(`Valeur invalide. Entrez un nombre entre ${meta.min} et ${meta.max}.`);
+        return;
+      }
+      controller.publish(meta.topic, num);
+    });
+  });
+
+  // ── Sliders de lecture (température, dépression) ──────────────────────
+  ['temperature', 'depression'].forEach(key => {
     const meta = TOPICS[key];
     ui.setBoundsLabels(key, meta.min, meta.max, meta.unit);
     if (meta.normLow !== undefined) ui.setNormLabel(key, meta.normLow, meta.normHigh, meta.unit);
     ui.setUnit(`unit-${key}`, meta.unit);
   });
 
-  // ── Sliders éditables (TAC, TH) ───────────────────────────────────────────
-  ['tac', 'th'].forEach(key => {
-    const meta = TOPICS[key];
-    ui.setBoundsLabels(key, meta.min, meta.max, meta.unit);
-    ui.setNormLabel(key, meta.normLow, meta.normHigh, meta.unit);
-    ui.setUnit(`unit-${key}`, meta.unit);
-  });
-
-  // ── Valeurs simples (températures, fréquence) ─────────────────────────────
+  // ── Valeurs simples (fréquence) ───────────────────────────────────────
   ['tempMoy', 'tempMin', 'tempMax', 'frequence'].forEach(key => {
     ui.setUnit(`unit-${key}`, TOPICS[key].unit);
   });
 
-  // ── ISL ───────────────────────────────────────────────────────────────────
+  // ── ISL ───────────────────────────────────────────────────────────────
   ui.setISLNormLabel('Équilibré entre −0,3 et +0,3');
 
-  // ── Paramètres (onglet Paramètres) ────────────────────────────────────────
+  // ── Paramètres (onglet Paramètres) ────────────────────────────────────
   [
     { key: 'volume',      id: 'p-volume'      },
     { key: 'debitPompe',  id: 'p-debitpompe'  },
