@@ -19,7 +19,7 @@ export const MODES = [
 export const TOPICS = {
   mode:           { topic: `${BASE}/Piscine/Mode`,          unit: '',       min: 0,   max: 2,    decimals: 0, step: 1     },
   ph:             { topic: `${BASE}/Piscine/PH`,            unit: '',       min: 6,   max: 9,    decimals: 1, step: 0.1,  normLow: 7.0,  normHigh: 7.4  },
-  redox:          { topic: `${BASE}/Piscine/Redox`,         unit: 'mV',     min: 0,   max: 800,  decimals: 0, step: 1,    normLow: 650,  normHigh: 750  },
+  redox:          { topic: `${BASE}/Piscine/Redox`,         unit: 'mV',     min: 300, max: 900,  decimals: 0, step: 1,    normLow: 650,  normHigh: 750  },
   tac:            { topic: `${BASE}/Piscine/TAC`,           unit: 'ppm',    min: 0,   max: 200,  decimals: 0, step: 1,    normLow: 80,   normHigh: 120  },
   tds:            { topic: `${BASE}/Piscine/TDS`,           unit: 'ppm',    min: 0,   max: 2000, decimals: 0, step: 1,    normLow: 250,  normHigh: 2000 },
   th:             { topic: `${BASE}/Piscine/TH`,            unit: 'ppm',    min: 0,   max: 300,  decimals: 0, step: 1,    normLow: 100,  normHigh: 250  },
@@ -166,42 +166,12 @@ export class Pool {
  #computePreco() {
   this.#preco = "";
   const V = this.#volume; // m³, peut être null
-
-  // ── 1. Désinfection (Redox) — priorité absolue ───────────────────────────
-  // Règle : ~30 mV par mg/L (ppm) de chlore libre ; 1 ppm = 1 g/m³
-  // g_chlore = (ΔmV / 30) × V
-  // Cible anti-yoyo : normLow + 10% de la plage (si trop bas) / normHigh − 10% (si trop haut)
-  if (this.#redox !== null) {
-    const meta = TOPICS["redox"];
-    if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
-      const plage  = meta.normHigh - meta.normLow;
-      const cibleB = meta.normLow  + plage * 0.1;  // cible si trop bas
-      const cibleH = meta.normHigh - plage * 0.1;  // cible si trop haut
-      if (this.#redox <= meta.normLow) {
-        const dose = V !== null
-          ? `ajouter ${(((cibleB - this.#redox) / 30) * V).toFixed(0)} g de chlore pur`
-          : `ajouter du chlore pur (volume piscine non configuré)`;
-        this.#preco = `La piscine n'est plus désinfectante : ${dose}`;
-        return;
-      }
-      if (this.#redox >= meta.normHigh) {
-        this.#preco = "La piscine est trop chlorée : ajouter de l'eau fraîche";
-        return;
-      }
-    }
-  }
-
-  // ── 2. Filtration (Dépression) ───────────────────────────────────────────
-  // normLow est négatif (ex : −3 bar) : si depression < normLow → filtre colmaté
-  if (this.#depression !== null) {
-    const meta = TOPICS["depression"];
-    if (meta?.normLow !== undefined && this.#depression < meta.normLow) {
-      this.#preco = "Nettoyage des filtres requis";
-      return;
-    }
-  }
-
-  // ── 3. TAC ───────────────────────────────────────────────────────────────
+  
+  // ── 1. TAC ───────────────────────────────────────────────────────────────
+  //
+  // Bien que la désinfection soit la priorité absolue, nous traitons le TAC en priorité car
+  //       celui-ci interviens fortement sur la qualité des mesures du Redox et du PH
+  //
   // TAC bas → bicarbonate de soude (NaHCO₃) :
   //   1 mol NaHCO₃ (84 g) ≡ 50 g CaCO₃ → 84/50 = 1,68 g/m³ par ppm de TAC
   //   g_NaHCO3 = (cibleB − TAC) × 1,68 × V
@@ -231,6 +201,40 @@ export class Pool {
         this.#preco = `TAC trop élevé : ${dose}`;
         return;
       }
+    }
+  }
+
+  // ── 2. Désinfection (Redox) — priorité absolue ───────────────────────────
+  // Règle : ~30 mV par mg/L (ppm) de chlore libre ; 1 ppm = 1 g/m³
+  // g_chlore = (ΔmV / 30) × V
+  // Cible anti-yoyo : normLow + 10% de la plage (si trop bas) / normHigh − 10% (si trop haut)
+  if (this.#redox !== null) {
+    const meta = TOPICS["redox"];
+    if (meta?.normLow !== undefined && meta?.normHigh !== undefined) {
+      const plage  = meta.normHigh - meta.normLow;
+      const cibleB = meta.normLow  + plage * 0.1;  // cible si trop bas
+      const cibleH = meta.normHigh - plage * 0.1;  // cible si trop haut
+      if (this.#redox <= meta.normLow) {
+        const dose = V !== null
+          ? `ajouter ${(((cibleB - this.#redox) / 30) * V).toFixed(0)} g de chlore pur`
+          : `ajouter du chlore pur (volume piscine non configuré)`;
+        this.#preco = `La piscine n'est plus désinfectante : ${dose}`;
+        return;
+      }
+      if (this.#redox >= meta.normHigh) {
+        this.#preco = "La piscine est trop chlorée : ajouter de l'eau fraîche";
+        return;
+      }
+    }
+  }
+
+  // ── 3. Filtration (Dépression) ───────────────────────────────────────────
+  // normLow est négatif (ex : −3 bar) : si depression < normLow → filtre colmaté
+  if (this.#depression !== null) {
+    const meta = TOPICS["depression"];
+    if (meta?.normLow !== undefined && this.#depression < meta.normLow) {
+      this.#preco = "Nettoyage des filtres requis";
+      return;
     }
   }
 

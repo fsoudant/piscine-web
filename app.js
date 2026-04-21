@@ -271,7 +271,7 @@ function updateChemRow(key, val) {
 function updateIslRow(result) {
   if (!result) return;
   const { value, status } = result;
-  const ISL_MIN = -5, ISL_MAX = 5;
+  const ISL_MIN = -2, ISL_MAX = 2;
   const pct    = Math.max(2, Math.min(98, (value - ISL_MIN) / (ISL_MAX - ISL_MIN) * 100));
   const display = value.toFixed(2);
   const badgeMap = { ok: '✓ Équilibré', warn: '△ À corriger', danger: '⚠ Corrosif/Entartrant' };
