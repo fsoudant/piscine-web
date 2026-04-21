@@ -68,13 +68,19 @@ ui.onEtalonnage = poolKey => {
 // ── Dispatch valeurs vers UI ───────────────────────────────────────────────
 
 function dispatchToUI(key, val) {
-	if (key === 'temperature') {
- 		 updateReadSlider(key, val);
-	}
-	const chemKeys = ['ph', 'redox', 'tac', 'th', 'tds', 'depression'];
-	if (chemKeys.includes(key)) {
- 	 updateChemRow(key, val);
-}
+
+  // ── Température seule garde l'ancien slider ────────────────────────────
+  if (key === 'temperature') {
+    updateReadSlider(key, val);
+    updateTempWidget();
+  }
+
+  // ── Widget temp (min/moy/max) ──────────────────────────────────────────
+  if (['tempMin', 'tempMax', 'tempMoy'].includes(key)) {
+    updateTempWidget();
+  }
+
+  // ── Valeurs simples ────────────────────────────────────────────────────
   const simpleMap = {
     tempMoy:   'val-tempmoy',
     tempMin:   'val-tempmin',
@@ -86,6 +92,7 @@ function dispatchToUI(key, val) {
     ui.updateSimpleValue(simpleMap[key], val, meta.decimals, meta.unit);
   }
 
+  // ── Plage de filtration ────────────────────────────────────────────────
   const timeKeys = ['heureDeb', 'minDeb', 'heureFin', 'minFin'];
   if (timeKeys.includes(key) && ui.updateFiltrationTime) {
     ui.updateFiltrationTime(
@@ -96,6 +103,7 @@ function dispatchToUI(key, val) {
     );
   }
 
+  // ── Paramètres éditables (onglet Paramètres) ───────────────────────────
   const paramKeys = ['volume','debitpompe','pompeph','pomperedox',
                      'freqbasse','freqmoy','freqhaute','minfreqhaut',
                      'etalonph1','etalonph2','etalontds2'];
@@ -105,11 +113,23 @@ function dispatchToUI(key, val) {
                           val, meta.decimals, meta.unit);
   }
 
+  // ── Mode ───────────────────────────────────────────────────────────────
   if (key === 'mode') {
     ui.updateMode(val);
   }
 
-  // Mise à jour du libellé des boutons d'étalonnage (valeur courante de l'étalon)
+  // ── Paramètres physico-chimiques + dépression → chem widget ───────────
+  const chemKeys = ['ph', 'redox', 'tac', 'th', 'tds', 'depression'];
+  if (chemKeys.includes(key)) {
+    updateChemRow(key, val);
+  }
+
+  // ── ISL → widget ISL ───────────────────────────────────────────────────
+  if (key === 'isl') {
+    updateIslRow(val);
+  }
+
+  // ── Étalonnage labels ──────────────────────────────────────────────────
   const etalonLabelMap = {
     etalonPh1:  { span: 'lbl-etalonph1',  decimals: 2, unit: '' },
     etalonPh2:  { span: 'lbl-etalonph2',  decimals: 2, unit: '' },
@@ -120,7 +140,7 @@ function dispatchToUI(key, val) {
     ui.updateEtalonnageLabel(span, val, decimals, unit);
   }
 
-  // État actif/inactif des boutons d'étalonnage (1 = en cours, 0 = terminé)
+  // ── Étalonnage états boutons ───────────────────────────────────────────
   const etalonStateMap = {
     etalonnagePh1:  'btn-etalonnageph1',
     etalonnagePh2:  'btn-etalonnageph2',
@@ -131,12 +151,9 @@ function dispatchToUI(key, val) {
     ui.setEtalonnageState(etalonStateMap[key], Number(val) === 1);
   }
 
+  // ── Préconisation ──────────────────────────────────────────────────────
   if (key === 'preco') {
     ui.updatePreco(val);
-  }
-
-  if (key === 'isl') {
-    ui.updateIslRow(val);
   }
 }
 
