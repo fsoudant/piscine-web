@@ -91,10 +91,7 @@ async function readStore() {
   try {
     const { blobs } = await list({ prefix: BLOB_PATH });
     if (!blobs.length) return { subscriptions: [], lastAlerts: {} };
-    const res = await fetch(blobs[0].url, {
-      cache: 'no-store',
-      headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
-    });
+    const res = await fetch(blobs[0].url, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch {
@@ -104,7 +101,7 @@ async function readStore() {
 
 async function writeStore(store) {
   await put(BLOB_PATH, JSON.stringify(store, null, 2), {
-    access: 'private',
+    access: 'public',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
